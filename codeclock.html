@@ -1,0 +1,4095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Code Clock</title>
+    <style>
+        :root {
+            --green: #44ff44;
+            --red: #ff4444;
+            --red-light: #ff6b6b;
+            --orange: #ffa500;
+            --teal: #4ecdc4;
+            --bg-dark: #1a1a2e;
+            --bg-card: #2a2a4e;
+            --bg-secondary: #2a2a4e;
+            --bg-tertiary: #3a3a5e;
+            --bg-input: rgba(255,255,255,0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #eeeeee;
+            --text-muted: #888888;
+            --text-dim: #666666;
+            --border-color: #444444;
+            --separator: rgba(255,255,255,0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: #eee;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        #app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .header {
+            background: var(--bg-card);
+            padding: 14px 19px;
+            padding-top: calc(14px + env(safe-area-inset-top));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .header-left {
+            cursor: pointer;
+        }
+        
+        .header-left-label {
+            font-size: 0.84rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        .header-time {
+            font-size: 2.16rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        
+        .header-alert {
+            display: none;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--red);
+            color: #fff;
+            text-align: center;
+            padding: 14px 19px;
+            padding-top: calc(14px + env(safe-area-inset-top));
+            font-size: 1.1rem;
+            font-weight: bold;
+            animation: alertFlash 0.5s infinite;
+            z-index: 10;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-alert.show {
+            display: flex;
+        }
+        
+        @keyframes alertFlash {
+            0%, 100% { background: var(--red); }
+            50% { background: #cc0000; }
+        }
+        
+        .header-title {
+            font-size: 1.32rem;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+        
+        .tabs {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-dark);
+            border-bottom: 1px solid #333;
+        }
+        
+        .tab-row {
+            display: flex;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 10px 4px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            cursor: pointer;
+            white-space: nowrap;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .tab-btn.active {
+            background: var(--bg-card);
+            border-bottom-color: var(--green);
+            color: #fff;
+        }
+        
+        .tab-icon {
+            font-size: 0.9em;
+            margin-right: 2px;
+            opacity: 0.8;
+        }
+        
+        .tab-btn.active .tab-icon {
+            opacity: 1;
+        }
+        
+        .tab-icon-img {
+            width: 18px;
+            height: 18px;
+            filter: invert(1);
+            opacity: 0.7;
+        }
+        
+        .tab-icon-img.icon-large {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .tab-icon-img.icon-medium {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .tab-btn.active .tab-icon-img {
+            opacity: 1;
+        }
+        
+        .tab-more-container {
+            position: relative;
+            flex: 1;
+        }
+        
+        .tab-more-btn {
+            width: 100%;
+        }
+        
+        .more-dots {
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            display: block;
+        }
+        
+        .tab-more-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 150px;
+            background: var(--bg-card);
+            border: 1px solid #444;
+            border-radius: 8px;
+            margin-top: 4px;
+            z-index: 100;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        .tab-more-menu.hidden {
+            display: none;
+        }
+        
+        .tab-more-item {
+            display: block;
+            width: 100%;
+            padding: 14px 16px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #333;
+            color: #fff;
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+        }
+        
+        .tab-more-item:last-child {
+            border-bottom: none;
+        }
+        
+        .tab-more-item:active {
+            background: var(--bg-tertiary);
+        }
+        
+        .tab-content {
+            flex: 1;
+            overflow: auto;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .timer-page {
+            padding: 16px;
+        }
+        
+        .start-controls {
+            margin-bottom: 16px;
+        }
+        
+        .start-controls.hidden {
+            display: none;
+        }
+        
+        .start-time-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 1.5rem;
+        }
+        
+        .start-time-display span {
+            color: #888;
+        }
+        
+        .time-picker {
+            padding: 12px 16px;
+            font-size: 1.5rem;
+            text-align: center;
+            background: var(--bg-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: #fff;
+            min-width: 140px;
+        }
+        
+        .time-picker::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+        
+        .start-time-input {
+            width: 70px;
+            padding: 12px 8px;
+            font-size: 1.5rem;
+            text-align: center;
+            background: #1a1a2e;
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            -moz-appearance: textfield;
+        }
+        
+        .start-time-input::-webkit-outer-spin-button,
+        .start-time-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .timer-box {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            border: 3px solid #666;
+            transition: all 0.3s ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .rhythm-check-box {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 3px solid #666;
+            transition: all 0.3s ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .rhythm-check-box.expired {
+            background: rgba(255,68,68,0.2);
+            animation: pulse 0.5s infinite;
+            border-color: var(--red);
+        }
+        
+        .rhythm-buttons {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .rhythm-btn {
+            flex: 1;
+            min-width: 0;
+            padding: 14px 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .rhythm-btn.vf {
+            background: #666;
+            color: #fff;
+        }
+        
+        .rhythm-btn.pea {
+            background: #666;
+            color: #fff;
+        }
+        
+        /* Initial state - rhythm buttons dominate screen */
+        .timer-page.initial-state .rhythm-check-box {
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .timer-page.initial-state .rhythm-buttons {
+            flex-direction: column;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 32px;
+        }
+        
+        .timer-page.initial-state .rhythm-btn {
+            padding: 40px 20px;
+            font-size: 1.8rem;
+        }
+        
+        .timer-page.initial-state .timer-box-label {
+            font-size: 1.5rem;
+        }
+        
+        .timer-box.expired {
+            background: rgba(255,68,68,0.2);
+            animation: pulse 0.5s infinite;
+        }
+        
+        .timer-box-label {
+            font-size: 1.035rem;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .timer-box-time {
+            font-size: 4.6rem;
+            font-weight: bold;
+            font-family: monospace;
+            color: #666;
+        }
+        
+        .timer-box-time.hidden {
+            display: none;
+        }
+        
+        .timer-box-hint {
+            font-size: 1.035rem;
+            color: #ff4444;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        
+        .timer-box-note {
+            font-size: 0.86rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        .timer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .timer-grid.hidden {
+            display: none;
+        }
+        
+        .small-timer {
+            padding: 12px;
+        }
+        
+        .small-timer .timer-box-label {
+            font-size: 0.92rem;
+        }
+        
+        .small-timer .timer-box-time {
+            font-size: 1.9rem;
+        }
+        
+        .shock-counter {
+            background: rgba(255,255,255,0.05);
+            border: 3px solid #666;
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .shock-counter.hidden {
+            display: none;
+        }
+        
+        .shock-label {
+            font-size: 0.92rem;
+            color: #aaa;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .shock-count {
+            font-size: 2.3rem;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .shock-hint {
+            font-size: 0.86rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        .btn-rosc {
+            width: 100%;
+            padding: 12px;
+            margin-top: 64px;
+            font-size: 0.9rem;
+            background: transparent;
+            color: #888;
+            border: 1px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .btn-rosc.rearrest {
+            background: transparent;
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+        
+        .btn-rosc.hidden {
+            display: none;
+        }
+        
+        .btn-rosc-history {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            background: transparent;
+            color: #4ecdc4;
+            border: 1px solid #4ecdc4;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .btn-rosc-history.hidden {
+            display: none;
+        }
+        
+        .rosc-history-item {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .rosc-history-item .duration {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+        
+        .rosc-history-item .times {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        .btn-update-time {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            background: transparent;
+            color: #888;
+            border: 1px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .btn-update-time.hidden {
+            display: none;
+        }
+        
+        .header-rosc {
+            font-size: 0.8rem;
+            color: #44ff44;
+            margin-top: 4px;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-overlay.hidden {
+            display: none;
+        }
+        
+        .modal {
+            background: #2a2a4e;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        
+        .modal h2 {
+            margin-bottom: 16px;
+            font-size: 1.3rem;
+        }
+        
+        .modal p {
+            margin-bottom: 12px;
+            color: #aaa;
+        }
+        
+        .btn-modal {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+        
+        .btn-modal:last-child {
+            margin-bottom: 0;
+        }
+        
+        .btn-green { background: #44ff44; color: #000; font-weight: bold; }
+        .btn-teal { background: #4ecdc4; color: #000; font-weight: bold; }
+        .btn-orange { background: #ffa500; color: #000; }
+        .btn-gray { background: #666; color: #fff; }
+        
+        .amio-alert {
+            background: #ff6b35;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+            color: #fff;
+        }
+        
+        .amio-alert p {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        
+        .amio-alert .sub {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 12px;
+            font-weight: normal;
+        }
+        
+        .ht-page {
+            padding: 16px;
+        }
+        
+        .ht-page h3 {
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            color: #4ecdc4;
+        }
+        
+        .ht-page h4 {
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            color: #888;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .check-item.checked {
+            background: rgba(68,255,68,0.1);
+            border-color: #44ff44;
+        }
+        
+        .check-box {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 2px solid #666;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+        
+        .check-item.checked .check-box {
+            background: #44ff44;
+            border-color: #44ff44;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .check-label {
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .check-arrow {
+            color: #ffa500;
+            margin-left: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .drugs-page {
+            padding: 16px;
+        }
+        
+        .drugs-page h3 {
+            margin-bottom: 16px;
+        }
+        
+        .drug-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            align-items: flex-start;
+        }
+        
+        .drug-item:not(:last-child) {
+            border-bottom: none;
+        }
+        
+        .drug-left {
+            flex: 1;
+        }
+        
+        .drug-name {
+            color: #4ecdc4;
+            font-weight: 500;
+        }
+        
+        .drug-dose {
+            font-family: monospace;
+            color: #fff;
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        
+        .drug-indication {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        .drug-section-toggle {
+            width: 100%;
+            padding: 14px;
+            margin-top: 12px;
+            background: #3a3a5e;
+            color: #aaa;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            text-align: left;
+        }
+        
+        .drug-section-toggle:first-of-type {
+            margin-top: 16px;
+        }
+        
+        .drug-section {
+            margin-top: 8px;
+            display: none;
+            padding-left: 8px;
+            border-left: 3px solid #3a3a5e;
+        }
+        
+        .drug-section.show {
+            display: block;
+        }
+        
+        .core-drugs {
+            margin-bottom: 8px;
+        }
+        
+        .core-drugs .drug-item {
+            background: rgba(78, 205, 196, 0.1);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+        
+        .stop-page {
+            padding: 16px;
+        }
+        
+        .stop-page h3 {
+            margin-bottom: 16px;
+        }
+        
+        .poor-prog {
+            background: rgba(255,107,107,0.1);
+            border: 2px solid #ff6b6b;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .poor-prog h4 {
+            margin-bottom: 12px;
+            color: #ff6b6b;
+        }
+        
+        .poor-prog ul {
+            padding-left: 20px;
+            line-height: 1.8;
+            font-size: 0.9rem;
+        }
+        
+        .prognosis-calc {
+            background: #2a2a4e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .prognosis-calc h4 {
+            margin-bottom: 4px;
+        }
+        
+        .calc-subtitle {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 16px;
+            margin-top: 0;
+        }
+        
+        .calc-row {
+            margin-bottom: 16px;
+        }
+        
+        .calc-row label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+        
+        .calc-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .calc-btn {
+            flex: 1;
+            padding: 10px;
+            background: #1a1a2e;
+            color: #888;
+            border: 2px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+        
+        .calc-btn.active {
+            background: rgba(68, 255, 68, 0.1);
+            color: #44ff44;
+            border-color: #44ff44;
+            font-weight: bold;
+        }
+        
+        .arrest-time-input {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .arrest-time-input select {
+            width: 80px;
+            padding: 10px;
+            font-size: 1.1rem;
+            text-align: center;
+            background: #1a1a2e;
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .arrest-time-input span {
+            color: var(--text-muted);
+        }
+        
+        .auto-sync-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        
+        .auto-sync-toggle input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--green);
+        }
+        
+        .auto-sync-toggle .toggle-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .auto-sync-toggle input:checked + .toggle-label {
+            color: var(--green);
+        }
+        
+        .prognosis-results {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .prognosis-box {
+            flex: 1;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .prognosis-box.primary {
+            border: 2px solid #4a4a6e;
+        }
+        
+        .prognosis-box .prog-label {
+            color: #888;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+        }
+        
+        .prognosis-box .prog-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #888;
+        }
+        
+        .prognosis-box .prog-value.good { color: #44ff44; }
+        .prognosis-box .prog-value.medium { color: #ffa500; }
+        .prognosis-box .prog-value.bad { color: #ff6b6b; }
+        
+        .stop-footer {
+            color: #666;
+            font-size: 0.75rem;
+            font-style: italic;
+            margin-top: 16px;
+            line-height: 1.4;
+        }
+        
+        .stop-footer p {
+            margin: 4px 0;
+        }
+        
+        .prognosis-toggle {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .prognosis-toggle-btn {
+            flex: 1;
+            padding: 14px 16px;
+            background: transparent;
+            color: #fff;
+            border: 2px solid #444;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .prognosis-toggle-btn:hover {
+            border-color: #666;
+            color: #fff;
+        }
+        
+        .prognosis-toggle-btn.active {
+            background: rgba(78, 205, 196, 0.15);
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+        }
+        
+        .prognosis-prompt {
+            text-align: center;
+            padding: 8px 20px 12px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        .prognosis-prompt.hidden {
+            display: none;
+        }
+        
+        .prognosis-section {
+            display: none;
+        }
+        
+        .prognosis-section.active {
+            display: block;
+        }
+        
+        .oohca-result {
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-top: 16px;
+            text-align: center;
+        }
+        
+        .oohca-placeholder {
+            text-align: center;
+            color: #666;
+            font-size: 1rem;
+            padding: 20px 0;
+        }
+        
+        .oohca-output.hidden {
+            display: none;
+        }
+        
+        .oohca-duration-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .oohca-probability {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .oohca-probability.good {
+            color: #44ff44;
+        }
+        
+        .oohca-probability.medium {
+            color: #ffa500;
+        }
+        
+        .oohca-probability.bad {
+            color: #ff6b6b;
+        }
+        
+        .oohca-outcome-label {
+            font-size: 0.85rem;
+            color: #fff;
+            margin-top: 8px;
+        }
+        
+        .oohca-caveats {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .oohca-caveats p {
+            margin: 4px 0;
+        }
+        
+        /* IO Page */
+        .io-page {
+            padding: 16px;
+        }
+        
+        .io-page h3 {
+            margin-bottom: 16px;
+        }
+        
+        .io-section {
+            margin-bottom: 20px;
+        }
+        
+        .io-section h4 {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .io-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .io-needle {
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 4px;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .io-item.pink .io-needle { background: #ff69b4; color: #000; }
+        .io-item.blue .io-needle { background: #4a9eff; color: #000; }
+        .io-item.yellow .io-needle { background: #ffd700; color: #000; }
+        
+        .io-detail {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        
+        .io-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .io-list span {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .io-list.good span {
+            background: rgba(68, 255, 68, 0.15);
+            color: #44ff44;
+            border: 1px solid rgba(68, 255, 68, 0.3);
+        }
+        
+        .io-list.bad span {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        
+        .ecpr-page {
+            padding: 16px;
+        }
+        
+        .ecpr-page h3 {
+            margin-bottom: 8px;
+        }
+        
+        .ecpr-page .subtitle {
+            color: #888;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+        }
+        
+        .ecpr-form {
+            background: #2a2a4e;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .ecpr-form label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+        
+        .ecpr-form input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2rem;
+            background: #1a1a2e;
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        
+        .ecpr-age-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .ecpr-age-input select {
+            width: 100px;
+            padding: 12px 8px;
+            font-size: 1.5rem;
+            text-align: center;
+            background: #1a1a2e;
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            -webkit-appearance: none;
+            appearance: none;
+            text-align-last: center;
+        }
+        
+        .ecpr-age-input span {
+            font-size: 1.2rem;
+            color: #888;
+        }
+        
+        .ecpr-form .age-warning {
+            margin-top: 8px;
+            color: #ff6b6b;
+            font-size: 0.9rem;
+        }
+        
+        .ecpr-factors {
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+        }
+        
+        .ecpr-factors h4 {
+            color: #4CAF50;
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+        }
+        
+        .ecpr-factors ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .ecpr-factors li {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            color: #ccc;
+        }
+        
+        .ecpr-note {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #888;
+            font-style: italic;
+        }
+        
+        .ecpr-row {
+            margin-bottom: 12px;
+        }
+        
+        .ecpr-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .ecpr-btn {
+            flex: 1;
+            padding: 10px;
+            background: #1a1a2e;
+            color: #888;
+            border: 2px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .ecpr-btn.yes { 
+            background: rgba(68, 255, 68, 0.1); 
+            color: #44ff44; 
+            border-color: #44ff44;
+            font-weight: bold;
+        }
+        .ecpr-btn.no { 
+            background: rgba(255, 107, 107, 0.1); 
+            color: #ff6b6b; 
+            border-color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .ecpr-survival {
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .ecpr-survival.show {
+            display: block;
+        }
+        
+        .ecpr-survival.good { background: rgba(68,255,68,0.1); border: 2px solid #44ff44; }
+        .ecpr-survival.medium { background: rgba(255,165,0,0.1); border: 2px solid #ffa500; }
+        .ecpr-survival.bad { background: rgba(255,68,68,0.1); border: 2px solid #ff6b6b; }
+        .ecpr-survival.neutral { background: rgba(255,255,255,0.05); border: 2px solid #666; }
+        
+        .ecpr-survival .label {
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .ecpr-survival .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .ecpr-survival.good .value { color: #44ff44; }
+        .ecpr-survival.medium .value { color: #ffa500; }
+        .ecpr-survival.bad .value { color: #ff6b6b; }
+        .ecpr-survival.neutral .value { color: #888; font-size: 1rem; }
+        
+        .ecpr-stop {
+            margin-top: 16px;
+            background: rgba(255,107,107,0.1);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .ecpr-stop h4 {
+            color: #ff6b6b;
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+        }
+        
+        .ecpr-stop ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+        
+        .ecpr-stop li {
+            color: #ccc;
+            margin-bottom: 4px;
+        }
+        
+        .ecpr-stop .exception {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #888;
+            font-style: italic;
+        }
+        
+        .log-page {
+            padding: 20px;
+        }
+        
+        .log-summary {
+            background: rgba(100, 210, 255, 0.08);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+        }
+        
+        .log-summary h4 {
+            color: var(--teal);
+            margin: 0 0 12px 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .log-summary-content {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-family: inherit;
+            color: var(--text-secondary);
+        }
+        
+        .log-summary .btn-copy-summary {
+            margin-top: 12px;
+            padding: 10px 16px;
+            background: var(--teal);
+            color: #000;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .btn-copy {
+            padding: 10px 16px;
+            background: var(--teal);
+            color: #000;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .log-entries {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-variant-numeric: tabular-nums;
+            font-size: 0.8rem;
+            max-height: 60vh;
+            overflow: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--separator);
+        }
+        
+        .log-entry .time {
+            color: var(--teal);
+        }
+        
+        .log-entry .sep {
+            color: var(--text-muted);
+        }
+        
+        .log-empty {
+            color: var(--text-dim);
+        }
+        
+        .info-page {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .info-page h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .info-page h4 {
+            color: var(--teal);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-page p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .info-page strong {
+            color: var(--text-primary);
+        }
+        
+        .info-version {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+        
+        .info-warning {
+            background: rgba(255, 69, 58, 0.12);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin: 16px 0;
+            font-size: 0.85rem;
+            color: var(--red-light);
+            line-height: 1.5;
+        }
+        
+        .info-warning strong {
+            color: var(--red);
+        }
+        
+        .info-box {
+            background: rgba(100, 210, 255, 0.08);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin: 12px 0;
+        }
+        
+        .info-box p {
+            margin-bottom: 8px;
+        }
+        
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-accept {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-top: 24px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+        
+        .info-accept strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .copyright {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            margin-top: 40px;
+            padding-bottom: 20px;
+        }
+        
+        /* Landing Screen */
+        #landingScreen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            background: var(--bg-dark);
+        }
+        
+        #landingScreen.hidden {
+            display: none;
+        }
+        
+        .landing-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+        
+        .landing-btn {
+            width: 100%;
+            max-width: 320px;
+            padding: 32px 24px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .landing-btn-new {
+            background: var(--green);
+            color: #000;
+        }
+        
+        .landing-btn-progress {
+            background: var(--orange);
+            color: #000;
+        }
+        
+        /* Setup Modal */
+        .setup-modal {
+            max-width: 400px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .setup-section {
+            margin-bottom: 24px;
+        }
+        
+        .setup-section:last-of-type {
+            margin-bottom: 32px;
+        }
+        
+        .setup-section.hidden {
+            display: none;
+        }
+        
+        .setup-label {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .setup-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .setup-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 14px 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: var(--bg-tertiary);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .setup-btn:active {
+            transform: scale(0.97);
+        }
+        
+        .setup-btn.selected {
+            border-color: var(--green);
+            background: rgba(68, 255, 68, 0.15);
+            color: var(--green);
+        }
+        
+        .setup-btn-wide {
+            flex: 0 0 100%;
+        }
+        
+        .setup-sub-options {
+            display: none;
+            margin-top: 12px;
+        }
+        
+        .setup-sub-options.visible {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .time-wheel-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
+        }
+        
+        .time-wheel {
+            flex: 1;
+            max-width: 100px;
+            padding: 14px 8px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            text-align: center;
+            background: var(--bg-tertiary);
+            color: #fff;
+            border: 2px solid #444;
+            border-radius: 10px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        
+        .time-wheel-sep {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #888;
+        }
+        
+        #btnStartSetup {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            background: #444;
+            color: #666;
+            cursor: not-allowed;
+            transition: all 0.2s;
+        }
+        
+        #btnStartSetup.ready {
+            background: var(--green);
+            color: #000;
+            cursor: pointer;
+        }
+        
+        .setup-validation {
+            color: var(--red);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            min-height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Screen -->
+    <div id="landingScreen">
+        <div class="landing-title">Code Clock</div>
+        <button class="landing-btn landing-btn-new" id="btnNewCode">New Arrest</button>
+        <button class="landing-btn landing-btn-progress" id="btnCodeInProgress">Resus in Progress</button>
+    </div>
+    
+    <!-- Setup Modal for Code in Progress -->
+    <div class="modal-overlay hidden" id="setupModal">
+        <div class="modal setup-modal">
+            <h2>Resus in Progress</h2>
+            
+            <div class="setup-section">
+                <div class="setup-label">Time since collapse</div>
+                <div class="setup-btn-group" id="setupTimeGroup">
+                    <button class="setup-btn" data-mins="3">~3 min</button>
+                    <button class="setup-btn" data-mins="5">~5 min</button>
+                    <button class="setup-btn" data-mins="10">~10 min</button>
+                    <button class="setup-btn" data-mins="custom">Enter exact time</button>
+                </div>
+                <div class="setup-sub-options" id="customTimeSection">
+                    <div class="time-wheel-container">
+                        <select class="time-wheel" id="setupHours"></select>
+                        <span class="time-wheel-sep">:</span>
+                        <select class="time-wheel" id="setupMinutes"></select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setup-section">
+                <div class="setup-label">Shocks Given</div>
+                <div class="setup-btn-group" id="setupShocksGroup">
+                    <button class="setup-btn" data-shocks="0">0</button>
+                    <button class="setup-btn" data-shocks="1">1</button>
+                    <button class="setup-btn" data-shocks="2">2</button>
+                    <button class="setup-btn" data-shocks="3+">3+</button>
+                </div>
+                <div class="setup-sub-options" id="shocksExactSection">
+                    <button class="setup-btn" data-shocks-exact="3">3</button>
+                    <button class="setup-btn" data-shocks-exact="4">4</button>
+                    <button class="setup-btn" data-shocks-exact="5">5</button>
+                    <button class="setup-btn" data-shocks-exact="6">6+</button>
+                </div>
+            </div>
+            
+            <div class="setup-section hidden" id="setupRhythmSection">
+                <div class="setup-label">Initial Rhythm</div>
+                <div class="setup-btn-group" id="setupRhythmGroup">
+                    <button class="setup-btn" data-rhythm="nonshockable">Non-shockable</button>
+                    <button class="setup-btn" data-rhythm="notchecked">Not yet checked</button>
+                </div>
+            </div>
+            
+            <div class="setup-section hidden" id="setupAmioSection">
+                <div class="setup-label">Amiodarone Given?</div>
+                <div class="setup-btn-group" id="setupAmioGroup">
+                    <button class="setup-btn" data-amio="yes">Yes</button>
+                    <button class="setup-btn" data-amio="no">No</button>
+                </div>
+            </div>
+            
+            <div class="setup-section">
+                <div class="setup-label">Adrenaline</div>
+                <div class="setup-btn-group" id="setupAdrenalineGroup">
+                    <button class="setup-btn" data-adr="none">None yet</button>
+                    <button class="setup-btn" data-adr="given">Just given</button>
+                    <button class="setup-btn" data-adr="due">Due soon</button>
+                </div>
+            </div>
+            
+            <div class="setup-validation" id="setupValidation"></div>
+            <button id="btnStartSetup">START</button>
+            <button class="btn-modal btn-gray" id="btnCancelSetup" style="margin-top: 12px;">Cancel</button>
+        </div>
+    </div>
+    
+    <div id="app" class="hidden">
+        <div class="header">
+            <div class="header-left" id="headerLeft">
+                <div class="header-left-label">Time since arrest</div>
+                <div class="header-time" id="totalTime">0:00</div>
+                <div class="header-rosc" id="roscDisplay"></div>
+            </div>
+            <div style="text-align: right;">
+                <div class="header-title">Code Clock</div>
+            </div>
+            <div class="header-alert" id="headerAlert"></div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab-row">
+                <button class="tab-btn active" data-tab="timer"><img class="tab-icon-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAD/h4/MvwAAAAlwSFlzAAAOwwAADsMBx2+oZAAAAAd0SU1FB+kMCgQ0D3tOqzUAAAL2SURBVEjHjdVPaFxVFMfxz0zMmEkm0+bPaNrRJGqpG3WKGwcCNhKkEWsD3RSR0ESo0NSN4KagUDdKUIq4cGOyEkTcuBTaRQtKDaRJamgRXGiTMK3atLGJmpqZyXWRaZwkM4nnbR73nPu995x3fudRzbrMCKVnRle1sGhVQFb7+nu7bLWwB6oCLrokLSAi52K1sIjqnrS0uGBZzg2htB6XV9geEPGwLgc9rU0D/nTTtAsumdfiI7M+tlD1YG3e9oO8oGBBTs6ComDFuCEfKlr1mVjlGkT1eE9W0bRzvjdjUZDUKeuQAz4RRBXNlidRXtATfhNMGdBaSq7eXklRtBgwJQi+01q5aCcsyhvVjphuSZx03aQvvG4P2o3Ku+VYJcAhvysYlhATEzcohTOlViq44rg6DYYVzG5trL3GBCMS6HN0ff3MejcGy85KajAiOK9lI+C0YFIHaCnLsRwQFJ0V02FScLJ8+yOuKRpAj94N4I2AYNlxDFo1Vn6H1wSXpbDP/m0BwZQ9Wk1Y8fLalyfiBZx3S6M5P9nentFr3jm1Dt4HNHpKMIZ+B+xkUS9iTJBRt9aJu7W56zq+dG9HAE9K+sWitIR7UdRr8LclEcE/m4JDBcBuCYv+khAv10KwyymfurMh+Jsteo24aUFb+VK7GQsyaFazYwJ1mpDxh2tSa0W861e7dKKgeUdAxqvolJSztAZYdFVEFs86vCPgis+RFTH9X8n7S41UK77D9v32IWVC3ivlVfhR0SAedLSy2kvWqweDisalyh3vlsRUq2+zztatteTpNCl4c6PzUZfX5UzvJkWs2VF9SBgRXNh6z8PmSwOFHk+o9Zx6Uc2iUgbFxdRKGFaQ8/xWftQpS/JGS1Oh0ZBmTd7RrFG3mPsj7Y7+yjnWGjK/aajWaFKDiNbSUL2hv3q71XjJuFV5Ez5wRMbjHpNxxPsm5K36Vvc2fzOQdtpVeUHebXPm3JYXrJjylof8D4vo8IavzcgLghU/+8qAdKWz/wV6KQF9aoLz7QAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAASUVORK5CYII=" alt="">Timer</button>
+                <button class="tab-btn" data-tab="hts"><img class="tab-icon-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfpDAoEGDj6wmWUAAAB/0lEQVQ4y21TPWhTURT+zrnvmVgR9IW02EWHOKjQQkVQoo1QtwxOQsHBnxYXS+mQqrNSRIJCFXWSDoUuLg6KxqXdHKQ0tM3QOpRQKKbQR9BEaN979zg0eXm5yTccznvn+875DvdecgEo2fdhgGJ2IAAsALLyda1u1EX1Z0YSGoDr/n7ai26wMktVd49ceffsIDmUMCd4myVv4MNZTdWV0cqlmUHb1Et1Pl8fe8GMQiU5c7mjDnImRlEoM++vYmjQ72JB7Gxsd4vZryMR1QsAVgAgTtyrwYIYrQEsetft5m9u6KQhhgiXpu49/xcuC2rqGoFqr8r46fVIW4coFj4jMX3CGNECF9949OCaDr9bJpkB0J+X2xgeo5Yg3I7XfgDAwjf0Pk7qCOGQTLw8fvcLqeXXvnp4JWh1sMLs+wZyMpzfwY07kM4RkFtpVJ5MLaJ/+mSk3jIpqdk0dj4dWJMXg7atwkynZtMAsreNtUFtjDO54+2HY0XyIPX248AFDURNRgmkTz8SHZ5KkxDtKG3+Dj2QBV/QDeRrUuDYKWxWqSuh9PdYn7CdsdbnA8WKFTcDM7OyNuZwPqWtYOTqUn4765j6YH2uePS+o2lPFSdXEYubBF3X8YncESEX/Ot9Ybfz8facG78ZE5ALsF/eqgEkCAOJ6ks5GgC54WUyIFoA4D9ewblWA9FfBgAAAABJRU5ErkJggg==" alt="">Actions</button>
+                <button class="tab-btn" data-tab="ecpr"><img class="tab-icon-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfpDAoENBoWk0/eAAABhUlEQVRIx9XVv0sbcRjH8VcaGjGNlSJiLU4OxaW4iEtBF6FCwUyd/Cvs0M1VZ2dXp4JDF6mT0MWGglMdMwgqLlIKnprE5Dpc/XHJJeauU7/PcsfzvN98uecDx39/cm1vRc89deW3etvkgBeKGn4JhEmCvDc+eOuVggtVX31x+rf3Utl7r5XUHfvms59acf8zn5wKH1TTD+/k5Cz4rhnrHfuoGL/emnpsJKoTZWUnCZ2aNQP3gmVBwlAodOasSyewfIuPqnQZ6l0Vo5FgSS2ToGaJJ5hRyBSBgplIMJ45ReORoJlZ0IwER5kFR5GgIsiEByrRw5DdTFvYNXTrWnSeGj+3eH+ZvBWXqfBLK/Lxna667hu/ttqZnUHrGn3hDesGk75qyYabR/EbG0rdFjNsU6sn3rJpuNduR2z1FGwZeSweY7a74tvG+knYhJ1EfMdEvyGdtNeB75lMk/Mp+zF831QaHKYd3OEHptPiMOtQKHRoNgsOc6qq5rLiMG/+X3BybX/PjvMHcaF8NiDRzOsAAAAedEVYdGljYzpjb3B5cmlnaHQAR29vZ2xlIEluYy4gMjAxNqwLMzgAAAAUdEVYdGljYzpkZXNjcmlwdGlvbgBzUkdCupBzBwAAAABJRU5ErkJggg==" alt="">E-CPR</button>
+                <button class="tab-btn" data-tab="stop"><img class="tab-icon-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAQAAADZc7J/AAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAD/h4/MvwAAAAlwSFlzAAAPTgAAD04BTNko5wAAAAd0SU1FB+kMCgQYOPrCZZQAAAPgSURBVEjHfdVtaJZlFAfw3zP37N2Zbas0BXMmU/GDm7ogtVJJl2CRTUwjKlGTRloYfZg4EM1FIhomAyuolu+wPpWFstZEn+VeQCJDU/BtaWo6Z07dM9eH596zZ478f7nv6+Kc/3XO/5xzXSH9MUCRt0w1UKcqvC2sXb0vNem63zjUz/1RZZ7X5AenjLEOqx2Xr0SRn2x1yQOQZIY6XQ4aG+xssy34G+ugLnVmSOrrkojZNjpgnhOqjAI33ACjVDlhngM2mv1/56eqsRKkqzANVKoE01RIByvVSO11Sk4gyJSjEXRY714f8kMOi4JGL8t0p38KSYbJUmqSNEQDgm7ZSkzRLYo0k5TKMqzXb0DwTbdSuYsyvWqS5iBznrNYgQuaMdxGbwrpsEi2liCiACsc8YxUyUaqtlMWnpDvE/WGgiw7VRspWYppIlYkug9zWEl8NVS9ufhQozOBiMyNU2VLN9thw3o1GKVTBAVmoFWTInyqzK24mEWatAbRvuawzlihe6sQQpFX1LtrtzA6RPwYl+ugzkCtYnt09y1jnmyZ/vG7xxU45kggcJfb4GFjNbiDkPly1MqWLa+nCnk+9rVaXFFggRZXhTyp3EVjJTlgiC2KdRthmUU2aHATb/jerSQUSgqCilrnpK/ssMO30p0Lhu205dqs84Vsy9Wg2x5JCmNpLFIjHNcibJKInYqlJbQyzNIYHzLCaiyKVaFVjsHxfswyWrKNGoL8e1GnznblRoDBcrTGCFpELQliGGOX5So193FNFsJta2yVZxDClohqiYk40ELPKhB200XHbNeoO8h+pi6XbPGUqy656zf7pZhphVL/2tcjYtRC1ywzxU2N7lioyvx4Uq1qpPpcabAzxTLXLBRVGOuDXNc1ikgTxXCb5PrZmXiDXbPbHgt84Jjj2Oc7tyW7LjdGcEGeHBd1IKxcp/kuCwn19ptue80xx3F06kSOPBd6RGyzVAoYbYL1LhvgPWsMTaCIOmW2icEqxVJtWmIEbdYqUSnDQ+a65SzuaTHeN8YHw5RiuZekmAAyVSqxVltvoWY5Ks9ktf60PuiKDB/psg4s1qhERjBajzlqVt8mGSdiBAYqtt/W4Np8RLMNyPOLeQnWI0SM6ylSDOe1m4p2Dd410dPgbw0gX0h9AsFU7c73JWhTrSyQ6ITmgICoLLSqci3uPlGZ6sT8Y0i1WrMKuXjBi2CQQw4ZlGCVq0Kz1YkvQy/Cpqu1WUZ8AlaJiFgVv7cybFZresLs9ntcC3zmL187J1epyd7HJr/a64rhXjfEO/7wQOSrctJZp+0KLoxCu5x21klV8u83/w+4Jyvm31aDdAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAASUVORK5CYII=" alt="">Prognosis</button>
+                <div class="tab-more-container">
+                    <button class="tab-btn tab-more-btn" id="tabMoreBtn"><span class="more-dots">•••</span>More</button>
+                    <div class="tab-more-menu hidden" id="tabMoreMenu">
+                        <button class="tab-more-item" data-tab="drugs">Drugs</button>
+                        <button class="tab-more-item" data-tab="io">IO Access</button>
+                        <button class="tab-more-item" data-tab="log">Event Log</button>
+                        <button class="tab-more-item" data-tab="info">Info</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content active" id="tab-timer">
+            <div class="timer-page initial-state">
+                <div class="rhythm-check-box" id="rhythmCheckBox">
+                    <div class="timer-box-label" id="rhythmCheckLabel">Rhythm Check</div>
+                    <div class="timer-box-time hidden" id="cprTime"></div>
+                    <div class="timer-box-hint" id="cprHint"></div>
+                    <div class="rhythm-buttons">
+                        <button class="rhythm-btn vf" id="btnVfVt">VF / VT</button>
+                        <button class="rhythm-btn pea" id="btnPea">PEA / Asystole</button>
+                    </div>
+                </div>
+                <div class="timer-grid hidden" id="timerGrid">
+                    <div class="timer-box small-timer" id="adrenalineTimer">
+                        <div class="timer-box-label" id="adrenalineLabel">Adrenaline</div>
+                        <div class="timer-box-time" id="adrenalineTime">TAP</div>
+                        <div class="timer-box-hint" id="adrHint"></div>
+                        <div class="timer-box-note" id="adrNote">Tap when given</div>
+                    </div>
+                    <div class="shock-counter hidden" id="shockCounter">
+                        <div class="shock-label">Shocks</div>
+                        <div class="shock-count" id="shockCount">TAP</div>
+                        <div class="shock-hint" id="shockHint">Tap when given</div>
+                    </div>
+                </div>
+                <button class="btn-rosc hidden" id="btnRosc">✓ ROSC</button>
+                <button class="btn-rosc-history hidden" id="btnRoscHistory">See times/durations of ROSC</button>
+                <button class="btn-update-time hidden" id="btnUpdateTime">Update time of arrest</button>
+                <div class="copyright">© 2025 Scott Santinon</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-hts">
+            <div class="ht-page">
+                <h3>Actions</h3>
+                <div id="actionsList"></div>
+                <div class="copyright">© 2025 Scott Santinon</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-drugs">
+            <div class="drugs-page">
+                <h3>Drug Reference</h3>
+                
+                <div class="core-drugs" id="coreDrugsList"></div>
+                
+                <button class="drug-section-toggle" data-section="electrolyteSection">▶ Electrolyte Emergencies</button>
+                <div class="drug-section" id="electrolyteSection"></div>
+                
+                <button class="drug-section-toggle" data-section="causesSection">▶ Suspected PE</button>
+                <div class="drug-section" id="causesSection"></div>
+                
+                <button class="drug-section-toggle" data-section="toxidromeSection">▶ Toxidrome Antidotes</button>
+                <div class="drug-section" id="toxidromeSection"></div>
+                
+                <div class="copyright">© 2025 Scott Santinon</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-io">
+            <div class="io-page">
+                <h3>Intraosseous Access</h3>
+                
+                <div class="io-section">
+                    <h4>Needle Size</h4>
+                    <div class="io-item pink">
+                        <div class="io-needle">Pink</div>
+                        <div class="io-detail">15mm – Paediatric or &lt;40kg</div>
+                    </div>
+                    <div class="io-item blue">
+                        <div class="io-needle">Blue</div>
+                        <div class="io-detail">25mm – Standard adult</div>
+                    </div>
+                    <div class="io-item yellow">
+                        <div class="io-needle">Yellow</div>
+                        <div class="io-detail">45mm – Obese or humeral site</div>
+                    </div>
+                </div>
+                
+                <div class="io-section">
+                    <h4>IO samples correlate well with venous</h4>
+                    <div class="io-list good">
+                        <span>Haemoglobin</span>
+                        <span>Haematocrit</span>
+                        <span>Chloride</span>
+                        <span>Glucose</span>
+                        <span>Urea</span>
+                        <span>Creatinine</span>
+                        <span>Albumin</span>
+                    </div>
+                </div>
+                
+                <div class="io-section">
+                    <h4>IO samples correlate poorly with venous</h4>
+                    <div class="io-list bad">
+                        <span>WBC</span>
+                        <span>Platelets</span>
+                        <span>CO₂</span>
+                        <span>Sodium</span>
+                        <span>Potassium</span>
+                        <span>Calcium</span>
+                    </div>
+                </div>
+                <div class="copyright">© 2025 Scott Santinon</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-stop">
+            <div class="stop-page">
+                <div class="poor-prog">
+                    <h4>Poor Prognostic Factors</h4>
+                    <ul>
+                        <li>Asystole >20 min without reversible cause</li>
+                        <li>EtCO₂ <10 mmHg after 20 min CPR</li>
+                        <li>No cardiac activity on echo</li>
+                        <li>Initial non-shockable rhythm</li>
+                        <li>Unwitnessed arrest</li>
+                    </ul>
+                </div>
+                
+                <div class="prognosis-prompt" id="prognosisPrompt">
+                    <p>Select arrest type</p>
+                </div>
+                
+                <div class="prognosis-toggle">
+                    <button class="prognosis-toggle-btn" data-section="ihca">In-Hospital</button>
+                    <button class="prognosis-toggle-btn" data-section="oohca">Out-of-Hospital</button>
+                </div>
+                
+                <!-- IHCA Section -->
+                <div class="prognosis-section" id="ihcaSection">
+                    <div class="prognosis-calc">
+                        <h4>Prognosis</h4>
+                        <p class="calc-subtitle">Probability if no ROSC at this timepoint</p>
+                        <div class="calc-row">
+                            <label>Age</label>
+                            <div class="calc-btns" id="ageButtons"></div>
+                        </div>
+                        <div class="calc-row">
+                            <label>Witnessed</label>
+                            <div class="calc-btns" id="witnessedButtons"></div>
+                        </div>
+                        <div class="calc-row">
+                            <label>Initial Rhythm</label>
+                            <div class="calc-btns" id="rhythmButtons"></div>
+                        </div>
+                        <div class="calc-row">
+                            <label>Arrest Duration (minutes)</label>
+                            <div class="arrest-time-input">
+                                <select id="arrestMins"></select>
+                                <span>min</span>
+                                <label class="auto-sync-toggle">
+                                    <input type="checkbox" id="autoSyncTime">
+                                    <span class="toggle-label">Use current resuscitation duration</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="prognosis-results">
+                            <div class="prognosis-box">
+                                <div class="prog-label">Survival</div>
+                                <div class="prog-value" id="survivalPercent">—</div>
+                            </div>
+                            <div class="prognosis-box primary">
+                                <div class="prog-label">Good neuro outcome</div>
+                                <div class="prog-value" id="neuroPercent">—</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stop-footer">
+                        <p>Based on research data from Okubo et al, BMJ 2024.</p>
+                        <p>US multicentre registry of 348,996 adult IHCA from 2000–2021.</p>
+                        <p>Provided as adjunct to clinical judgment. This is not a termination of resuscitation rule.</p>
+                    </div>
+                </div>
+                
+                <!-- OOHCA Section -->
+                <div class="prognosis-section" id="oohcaSection">
+                    <div class="prognosis-calc">
+                        <h4>Prognosis</h4>
+                        <div class="calc-row">
+                            <label>Initial Rhythm</label>
+                            <div class="calc-btns" id="oohcaRhythmButtons"></div>
+                        </div>
+                        <div class="calc-row">
+                            <label>Witnessed</label>
+                            <div class="calc-btns" id="oohcaWitnessedButtons"></div>
+                        </div>
+                        <div class="calc-row">
+                            <label>Bystander CPR</label>
+                            <div class="calc-btns" id="oohcaBystanderButtons"></div>
+                        </div>
+                        <div class="calc-row">
+                            <label>Duration of Professional CPR</label>
+                            <div class="oohca-duration-row">
+                                <div class="arrest-time-input">
+                                    <select id="oohcaMins"></select>
+                                    <span>min</span>
+                                </div>
+                                <label class="auto-sync-toggle">
+                                    <input type="checkbox" id="oohcaAutoSync">
+                                    <span class="toggle-label">Use current resuscitation duration</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="oohca-result" id="oohcaResultBox">
+                            <div class="oohca-placeholder" id="oohcaPlaceholder">Select patient details above</div>
+                            <div class="oohca-output hidden" id="oohcaOutput">
+                                <div class="oohca-probability" id="oohcaProbability"></div>
+                                <div class="oohca-outcome-label" id="oohcaOutcomeLabel"></div>
+                            </div>
+                        </div>
+                        <div class="oohca-caveats">
+                            <p>• Values are approximate ranges extracted from published curves</p>
+                        </div>
+                    </div>
+                    <div class="stop-footer">
+                        <p>Data: ROC-PRIMED (Reynolds et al. Circulation 2016)</p>
+                        <p>11,368 adult OHCA patients · 10 North American sites · 2007–2010</p>
+                        <p>This is not a termination of resuscitation rule. Use validated TOR criteria.</p>
+                    </div>
+                </div>
+                
+                <div class="copyright">© 2025 Scott Santinon</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-ecpr">
+            <div class="ecpr-page">
+                <h3>E-CPR Inclusion Criteria</h3>
+                <p class="subtitle"><a href="https://ecmo.icu/ecpr-inclusion-criteria/" target="_blank" style="color: #888;">The Alfred ICU criteria</a></p>
+                <div class="ecpr-form">
+                    <div class="ecpr-row">
+                        <label>Patient Age</label>
+                        <div class="ecpr-age-input">
+                            <select id="ecprAge"></select>
+                            <span>years</span>
+                        </div>
+                        <div class="age-warning" id="ecprAgeWarning"></div>
+                    </div>
+                    <div class="ecpr-row">
+                        <label id="ecprTimeLabel">Can decision to initiate ECMO be made in time?</label>
+                        <div class="ecpr-btns">
+                            <button class="ecpr-btn" data-field="withinTime" data-value="yes">Yes</button>
+                            <button class="ecpr-btn" data-field="withinTime" data-value="no">No</button>
+                        </div>
+                    </div>
+                    <div class="ecpr-row">
+                        <label>Witnessed arrest?</label>
+                        <div class="ecpr-btns">
+                            <button class="ecpr-btn" data-field="witnessed" data-value="yes">Yes</button>
+                            <button class="ecpr-btn" data-field="witnessed" data-value="no">No</button>
+                        </div>
+                    </div>
+                    <div class="ecpr-row">
+                        <label>Shockable initial rhythm?</label>
+                        <div class="ecpr-btns">
+                            <button class="ecpr-btn" data-field="shockable" data-value="yes">Yes</button>
+                            <button class="ecpr-btn" data-field="shockable" data-value="no">No</button>
+                        </div>
+                    </div>
+                    <div class="ecpr-row">
+                        <label>Was bystander CPR initiated within 5 mins of collapse?</label>
+                        <div class="ecpr-btns">
+                            <button class="ecpr-btn" data-field="bystander" data-value="yes">Yes</button>
+                            <button class="ecpr-btn" data-field="bystander" data-value="no">No</button>
+                        </div>
+                    </div>
+                    <div class="ecpr-row">
+                        <label>No end-stage disease?</label>
+                        <div class="ecpr-btns">
+                            <button class="ecpr-btn" data-field="noEndStage" data-value="yes">Yes</button>
+                            <button class="ecpr-btn" data-field="noEndStage" data-value="no">No</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="ecpr-survival" id="ecprSurvival">
+                    <div class="label">Survival if VA-ECMO initiated</div>
+                    <div class="value" id="ecprSurvivalValue"></div>
+                </div>
+                
+                <div class="ecpr-factors">
+                    <h4>Factors favouring inclusion</h4>
+                    <ul>
+                        <li>Signs of life (movements, breathing effort, gasping)</li>
+                        <li>Any ROSC period during arrest</li>
+                    </ul>
+                    <p class="ecpr-note">ROSC ≥20min = separate arrest episodes</p>
+                </div>
+                
+                <div class="ecpr-stop">
+                    <h4>Factors favouring exclusion</h4>
+                    <ul>
+                        <li>Age >65 years</li>
+                        <li>EtCO₂ <10 mmHg</li>
+                        <li>Femoral cannulation impossible</li>
+                        <li>Aortic regurgitation > mild</li>
+                        <li>Pericardial effusion/tamponade with suspected aortic dissection</li>
+                    </ul>
+                    <p class="exception">Non-shockable rhythm exceptions: Hypothermia <32°C, drug intoxication</p>
+                </div>
+                <div class="copyright">© 2025 Scott Santinon</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-log">
+            <div class="log-page">
+                <div class="log-summary" id="logSummary" style="display: none;">
+                    <h4>Summary</h4>
+                    <div class="log-summary-content" id="logSummaryContent"></div>
+                    <button class="btn-copy-summary" id="btnCopySummary">Copy Summary</button>
+                </div>
+                <div class="log-header">
+                    <h3>Event Log</h3>
+                    <button class="btn-copy" id="btnCopyLog">Copy</button>
+                </div>
+                <div class="log-entries" id="logEntries">
+                    <p class="log-empty">No events logged yet</p>
+                </div>
+                <div class="copyright">© 2025 Scott Santinon</div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-info">
+            <div class="info-page">
+                <h3>Code Clock</h3>
+                <p class="info-version">Terms of Use, Disclaimer & Privacy Policy<br>Version 1.0 – December 2025</p>
+                
+                <div class="info-warning">
+                    <strong>IMPORTANT:</strong> Please read these terms carefully before using this application. By using Code Clock, you acknowledge that you have read, understood, and agree to be bound by these terms. If you do not agree, do not use this application.
+                </div>
+                
+                <h4>1. Intended Users</h4>
+                <p>Code Clock is designed <strong>exclusively for use by qualified healthcare professionals</strong> who have received appropriate training in cardiopulmonary resuscitation (CPR), advanced life support (ALS), and emergency medical care. This includes, but is not limited to, physicians, nurses, paramedics, and other licensed medical practitioners.</p>
+                <p>This application is <strong>not intended for use by the general public</strong> or by individuals without formal medical training. If you are not a qualified healthcare professional, do not use this application in a medical emergency—instead, call emergency services immediately.</p>
+                
+                <h4>2. Purpose & Intended Use</h4>
+                <p>Code Clock is a <strong>reference and timing tool</strong> designed to assist qualified healthcare professionals during cardiac arrest resuscitation. The application provides:</p>
+                <p>• Timers for CPR cycles and medication intervals<br>
+                • Reference information for drug dosages<br>
+                • Prognostic information based on published research<br>
+                • Checklists for reversible causes<br>
+                • Event logging functionality</p>
+                <p>This application is intended to <strong>supplement—not replace—clinical training, professional judgment, and established protocols</strong>. It is a cognitive aid only.</p>
+                
+                <h4>3. Not Medical Advice</h4>
+                <p>The information provided in this application is for <strong>general informational and educational purposes only</strong>. It does not constitute medical advice, diagnosis, or treatment recommendations.</p>
+                <p><strong>Nothing in this application creates a physician-patient, provider-patient, or any other healthcare relationship</strong> between the developer and any user or patient.</p>
+                <p>Clinical decisions must always be made by the treating healthcare professional based on their own assessment, training, local protocols, and the specific circumstances of each patient.</p>
+                
+                <h4>4. Clinical Judgment Prevails</h4>
+                <div class="info-warning">
+                    <strong>Your professional clinical judgment must always take precedence over any information displayed in this application.</strong> If there is any conflict between the application and your clinical assessment, local protocols, or current guidelines, you must rely on your professional judgment and disregard the application.
+                </div>
+                <p>Healthcare professionals are responsible for:</p>
+                <p>• Verifying all drug dosages before administration<br>
+                • Confirming timing intervals against current guidelines<br>
+                • Assessing each patient individually<br>
+                • Following their institution's protocols and policies<br>
+                • Staying current with the latest resuscitation guidelines</p>
+                
+                <h4>5. Sources & Methodology</h4>
+                <p>The clinical information in this application is based on:</p>
+                <p><strong>Timing protocols:</strong> Australian and New Zealand Committee on Resuscitation (ANZCOR) Guidelines</p>
+                <p><strong>In-hospital cardiac arrest prognosis:</strong> Okubo et al., BMJ 2024 – survival probability data extracted from published Kaplan-Meier curves</p>
+                <p><strong>Out-of-hospital cardiac arrest prognosis:</strong> Reynolds et al., Circulation 2016 – probability ranges derived from published survival curves</p>
+                <p><strong>E-CPR criteria:</strong> Based on published inclusion criteria from E-CPR programs</p>
+                <p><strong>Drug dosages:</strong> Standard adult doses from established resuscitation guidelines</p>
+                <p>Prognostic calculations provide <strong>approximate probability ranges</strong> based on population-level data and may not reflect individual patient outcomes. These are provided as decision-support information only and should not be the sole basis for clinical decisions.</p>
+                
+                <h4>6. No Warranty</h4>
+                <p>This application is provided <strong>"AS IS" and "AS AVAILABLE"</strong> without warranty of any kind, either express or implied, including but not limited to:</p>
+                <p>• Warranties of merchantability<br>
+                • Fitness for a particular purpose<br>
+                • Accuracy, reliability, or completeness of information<br>
+                • Non-infringement<br>
+                • Uninterrupted or error-free operation</p>
+                <p>The developer does not warrant that:</p>
+                <p>• The application will meet your requirements<br>
+                • The application will be available at all times<br>
+                • The information is current, complete, or accurate<br>
+                • Any errors will be corrected<br>
+                • The application is free from viruses or harmful components</p>
+                
+                <h4>7. Limitation of Liability</h4>
+                <p><strong>To the maximum extent permitted by applicable law</strong>, the developer, contributors, and any affiliated parties shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages, including but not limited to:</p>
+                <p>• Personal injury or death<br>
+                • Loss of profits, data, or goodwill<br>
+                • Medical malpractice claims<br>
+                • Damages arising from reliance on the application<br>
+                • Damages arising from errors, omissions, or inaccuracies<br>
+                • Damages arising from interruption or unavailability<br>
+                • Any other damages arising from the use or inability to use this application</p>
+                <p>This limitation applies regardless of the legal theory (contract, tort, negligence, strict liability, or otherwise), even if the developer has been advised of the possibility of such damages.</p>
+                <p><strong>Some jurisdictions do not allow the exclusion of certain warranties or limitation of liability for certain damages. In such jurisdictions, the developer's liability shall be limited to the maximum extent permitted by law.</strong></p>
+                
+                <h4>8. Assumption of Risk</h4>
+                <p>By using this application, you expressly acknowledge and agree that:</p>
+                <p>• You use this application <strong>entirely at your own risk</strong><br>
+                • You are solely responsible for any clinical decisions made<br>
+                • You will verify all information independently before relying on it<br>
+                • You accept full responsibility for patient outcomes<br>
+                • The developer bears no responsibility for clinical outcomes</p>
+                
+                <h4>9. Indemnification</h4>
+                <p>You agree to <strong>indemnify, defend, and hold harmless</strong> the developer and any affiliated parties from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising from or related to:</p>
+                <p>• Your use of the application<br>
+                • Your violation of these terms<br>
+                • Your violation of any rights of another party<br>
+                • Any claim that your use of the application caused damage to a third party<br>
+                • Any medical malpractice or negligence claims related to your use of the application</p>
+                
+                <h4>10. Not a Medical Device</h4>
+                <p>This application is <strong>not a medical device</strong> and has not been cleared or approved by the Therapeutic Goods Administration (TGA), Food and Drug Administration (FDA), or any other regulatory body. It does not:</p>
+                <p>• Diagnose, treat, cure, or prevent any disease<br>
+                • Monitor vital signs or physiological parameters<br>
+                • Connect to or control any medical equipment<br>
+                • Make autonomous clinical decisions</p>
+                <p>This application is a software tool that displays reference information and timing functions only.</p>
+                
+                <h4>11. Updates & Changes</h4>
+                <p>Medical guidelines and best practices evolve over time. The developer:</p>
+                <p>• Makes no commitment to update the application<br>
+                • May modify or discontinue the application at any time<br>
+                • May update these terms at any time</p>
+                <p>It is your responsibility to ensure you are using the most current version and to verify that the information aligns with current guidelines.</p>
+                
+                <h4>12. Privacy Policy</h4>
+                <div class="info-box">
+                    <p><strong>Data Collection:</strong> This application does not collect, store, transmit, or share any personal data, health information, or usage analytics.</p>
+                    <p><strong>Local Storage:</strong> All data (event logs, settings) is stored locally on your device only and is not accessible to the developer or any third party.</p>
+                    <p><strong>Network Access:</strong> This application functions entirely offline. No internet connection is required or used during operation.</p>
+                    <p><strong>Third Parties:</strong> This application does not integrate with any third-party analytics, advertising, or data collection services.</p>
+                </div>
+                
+                <h4>13. Intellectual Property</h4>
+                <p>© 2025 Scott Santinon. All rights reserved.</p>
+                <p>The Code Clock name, design, and content are protected by copyright and other intellectual property laws. You may not copy, modify, distribute, or create derivative works without prior written permission.</p>
+                
+                <h4>14. Governing Law</h4>
+                <p>These terms shall be governed by and construed in accordance with the laws of <strong>Victoria, Australia</strong>, without regard to its conflict of law provisions. Any disputes arising from these terms or your use of the application shall be subject to the exclusive jurisdiction of the courts of Victoria, Australia.</p>
+                
+                <h4>15. Severability</h4>
+                <p>If any provision of these terms is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary so that these terms shall otherwise remain in full force and effect.</p>
+                
+                <h4>16. Entire Agreement</h4>
+                <p>These terms constitute the entire agreement between you and the developer regarding the use of this application and supersede all prior agreements and understandings.</p>
+                
+                <h4>17. Contact</h4>
+                <p>For questions about these terms or the application, please contact: <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b6c5d5d9c2c298c5d7d8c2dfd8d9d8f6d1dbd7dfda98d5d9db">[email&#160;protected]</a></strong></p>
+                
+                <div class="info-accept">
+                    <strong>By using Code Clock, you confirm that:</strong><br>
+                    • You are a qualified healthcare professional<br>
+                    • You have read and understood these terms<br>
+                    • You agree to be bound by these terms<br>
+                    • You accept full responsibility for clinical decisions
+                </div>
+                
+                <p class="info-version" style="margin-top: 24px;">Last updated: December 2025</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="updateTimeModal">
+        <div class="modal">
+            <h2>Update Arrest Time</h2>
+            <p>Update time of arrest to</p>
+            <div class="start-time-display" style="margin: 16px 0;">
+                <input type="time" class="time-picker" id="updateTime">
+            </div>
+            <button class="btn-modal btn-green" id="btnConfirmUpdate">Update</button>
+            <button class="btn-modal btn-gray" id="btnCancelUpdate">Cancel</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="ecprModal">
+        <div class="modal">
+            <h2>E-CPR Assessment</h2>
+            <p style="margin-bottom: 24px; font-size: 1.1rem; line-height: 1.5;">Should you call for ECMO?</p>
+            <button class="btn-modal btn-green" id="ecprYes">Yes</button>
+            <button class="btn-modal btn-teal" id="ecprAssess">Check criteria</button>
+            <button class="btn-modal btn-orange" id="ecprRemind">Remind 5 min</button>
+            <button class="btn-modal btn-gray" id="ecprNo">Not appropriate / Not available</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="amioModal">
+        <div class="modal">
+            <h2 id="amioTitle">3rd Shock</h2>
+            <div class="amio-alert">
+                <p id="amioDose">Amiodarone 300mg IV</p>
+            </div>
+            <button class="btn-modal btn-green" id="amioGiven">Given</button>
+            <button class="btn-modal btn-gray" id="amioOmitted">Omitted</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="shockConfirmModal">
+        <div class="modal">
+            <h2>Shockable Rhythm</h2>
+            <button class="btn-modal btn-orange" id="shockYes">Shock given</button>
+            <button class="btn-modal btn-gray" id="shockNo">No shock</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="adrenalineReminderModal">
+        <div class="modal">
+            <h2 id="adrReminderTitle">Adrenaline</h2>
+            <p id="adrReminderContext" class="modal-context"></p>
+            <button class="btn-modal btn-green" id="adrReminderYes">Given</button>
+            <button class="btn-modal btn-gray" id="adrReminderOmit">Skipped</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="roscHistoryModal">
+        <div class="modal">
+            <h2>ROSC History</h2>
+            <div id="roscHistoryContent"></div>
+            <button class="btn-modal btn-gray" id="roscHistoryClose">Close</button>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    (function() {
+        var resusStarted = false;
+        var totalSeconds = 0;
+        var arrestStartTime = null;
+        var cprSeconds = 120;
+        var rhythmCheckStarted = false;
+        var adrenalineSeconds = 240;
+        var adrenalineStarted = false;
+        var adrenalineCount = 0;
+        var shockCount = 0;
+        var rhythmCheckCount = 0;
+        var ecprPromptDismissed = false;
+        var ecprRemindTime = null;
+        var htChecked = {};
+        var log = [];
+        var timerInterval = null;
+        var roscActive = false;
+        var roscTimeStr = null;
+        var roscStartTime = null;
+        var roscHistory = [];
+        var wakeLock = null;
+        
+        var calcAge = null;
+        var calcWitnessed = null;
+        var calcRhythm = null;
+        var calcMins = 0;
+        
+        var ecprData = { withinTime: null, witnessed: null, shockable: null, bystander: null, noEndStage: null };
+        var amiodaroneGiven = false;
+        var isShockableRhythm = null;
+        var joinedMidArrest = false;
+        
+        // Prognosis data from Okubo et al. BMJ 2024 (n=348,996 IHCA)
+        // Time-dependent probability among patients pending first ROSC at each minute
+        
+        // Favorable functional outcome (CPC 1-2) - Figure 8
+        // Good neurological outcome data from Okubo et al. BMJ 2024 - using ranges
+        var favorableOutcomeData = {
+            '<60': { 
+                'witnessed-shockable': { 1: '>30%', 10: '10-20%', 20: '5-10%', 30: '2-5%', 40: '2-5%', 50: '<2%', 60: '<1%' }, 
+                'witnessed-nonshockable': { 1: '10-20%', 10: '5-10%', 20: '2-5%', 30: '<2%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-shockable': { 1: '>30%', 10: '10-20%', 20: '5-10%', 30: '2-5%', 40: '<2%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-nonshockable': { 1: '10-20%', 10: '2-5%', 20: '<2%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' } 
+            },
+            '60-79': { 
+                'witnessed-shockable': { 1: '>30%', 10: '10-20%', 20: '5-10%', 30: '2-5%', 40: '<2%', 50: '<1%', 60: '<1%' }, 
+                'witnessed-nonshockable': { 1: '10-20%', 10: '2-5%', 20: '2-5%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-shockable': { 1: '20-30%', 10: '5-10%', 20: '2-5%', 30: '<2%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-nonshockable': { 1: '5-10%', 10: '2-5%', 20: '<1%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' } 
+            },
+            '>=80': { 
+                'witnessed-shockable': { 1: '20-30%', 10: '5-10%', 20: '2-5%', 30: '<2%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'witnessed-nonshockable': { 1: '5-10%', 10: '2-5%', 20: '<2%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-shockable': { 1: '10-20%', 10: '5-10%', 20: '2-5%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-nonshockable': { 1: '2-5%', 10: '<2%', 20: '<1%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' } 
+            }
+        };
+        
+        // Survival to hospital discharge - Okubo et al. BMJ 2024 - using ranges
+        var survivalData = {
+            '<60': { 
+                'witnessed-shockable': { 1: '>30%', 10: '20-30%', 20: '10-20%', 30: '5-10%', 40: '2-5%', 50: '<2%', 60: '<2%' }, 
+                'witnessed-nonshockable': { 1: '20-30%', 10: '5-10%', 20: '2-5%', 30: '<2%', 40: '<2%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-shockable': { 1: '>30%', 10: '10-20%', 20: '10-20%', 30: '2-5%', 40: '2-5%', 50: '<2%', 60: '<1%' }, 
+                'unwitnessed-nonshockable': { 1: '10-20%', 10: '5-10%', 20: '2-5%', 30: '<2%', 40: '<1%', 50: '<1%', 60: '<1%' } 
+            },
+            '60-79': { 
+                'witnessed-shockable': { 1: '>30%', 10: '10-20%', 20: '5-10%', 30: '2-5%', 40: '2-5%', 50: '<2%', 60: '<1%' }, 
+                'witnessed-nonshockable': { 1: '10-20%', 10: '5-10%', 20: '2-5%', 30: '<2%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-shockable': { 1: '>30%', 10: '10-20%', 20: '5-10%', 30: '2-5%', 40: '<2%', 50: '<2%', 60: '<1%' }, 
+                'unwitnessed-nonshockable': { 1: '10-20%', 10: '5-10%', 20: '2-5%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' } 
+            },
+            '>=80': { 
+                'witnessed-shockable': { 1: '20-30%', 10: '10-20%', 20: '5-10%', 30: '2-5%', 40: '<2%', 50: '<1%', 60: '<1%' }, 
+                'witnessed-nonshockable': { 1: '10-20%', 10: '5-10%', 20: '<2%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-shockable': { 1: '20-30%', 10: '10-20%', 20: '2-5%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' }, 
+                'unwitnessed-nonshockable': { 1: '5-10%', 10: '2-5%', 20: '<2%', 30: '<1%', 40: '<1%', 50: '<1%', 60: '<1%' } 
+            }
+        };
+        
+        // OOHCA Prognosis data from Reynolds et al. Circulation 2016 (ROC-PRIMED)
+        // Values digitized from Figure 4 - probability bands by phenotype and CPR duration
+        var oohcaPrognosis = {
+            'shockable_witnessed_bystander':       { 5: '20-30%', 10: '20-30%', 15: '10-20%', 20: '10-20%', 30: '5-10%', 40: '2-5%' },
+            'shockable_witnessed_noBystander':     { 5: '20-30%', 10: '10-20%', 15: '5-10%', 20: '5-10%', 30: '5-10%', 40: '2-5%' },
+            'shockable_unwitnessed_bystander':     { 5: '10-20%', 10: '5-10%', 15: '5-10%', 20: '2-5%', 30: '1-2%', 40: '2-5%' },
+            'shockable_unwitnessed_noBystander':   { 5: '10-20%', 10: '5-10%', 15: '5-10%', 20: '2-5%', 30: '<1%', 40: '<1%' },
+            'nonshockable_witnessed_bystander':    { 5: '2-5%', 10: '1-2%', 15: '1-2%', 20: '<1%', 30: '<1%', 40: '<1%' },
+            'nonshockable_witnessed_noBystander':  { 5: '2-5%', 10: '1-2%', 15: '1-2%', 20: '<1%', 30: '<1%', 40: '<1%' },
+            'nonshockable_unwitnessed_bystander':  { 5: '<2%', 10: '<2%', 15: '<1%', 20: '<1%', 30: '<1%', 40: '<1%' },
+            'nonshockable_unwitnessed_noBystander':{ 5: '<2%', 10: '<2%', 15: '<1%', 20: '<1%', 30: '<1%', 40: '<1%' }
+        };
+        
+        // OOHCA calculator state
+        var oohcaRhythm = null; // 'shockable' or 'nonshockable'
+        var oohcaWitnessed = null; // 'witnessed' or 'unwitnessed'
+        var oohcaBystander = null; // 'bystander' or 'noBystander'
+        var oohcaMins = 0;
+        var oohcaAutoSync = false;
+        
+        function $(id) { return document.getElementById(id); }
+        
+        function formatTime(seconds) {
+            var sign = seconds < 0 ? '+' : '';
+            var mins = Math.floor(Math.abs(seconds) / 60);
+            var secs = Math.abs(seconds) % 60;
+            return sign + mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+        
+        function formatTimeHMS(seconds) {
+            var hrs = Math.floor(seconds / 3600);
+            var mins = Math.floor((seconds % 3600) / 60);
+            var secs = seconds % 60;
+            if (hrs > 0) return hrs + ':' + (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+        
+        function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+        
+        // Audio alerts using Web Audio API
+        var audioContext = null;
+        function playAlert(type) {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                var osc = audioContext.createOscillator();
+                var gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                if (type === 'rhythm') {
+                    // Triple beep for rhythm check
+                    osc.frequency.value = 880; // A5
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gain.gain.setValueAtTime(0, audioContext.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.3, audioContext.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0, audioContext.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.3, audioContext.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0, audioContext.currentTime + 0.65);
+                    osc.stop(audioContext.currentTime + 0.7);
+                } else if (type === 'adrenaline') {
+                    // Double lower tone for adrenaline
+                    osc.frequency.value = 660; // E5
+                    gain.gain.value = 0.3;
+                    osc.start();
+                    gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gain.gain.setValueAtTime(0, audioContext.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.3, audioContext.currentTime + 0.35);
+                    gain.gain.setValueAtTime(0, audioContext.currentTime + 0.55);
+                    osc.stop(audioContext.currentTime + 0.6);
+                }
+            } catch (e) {
+                // Audio not supported
+            }
+        }
+        
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                } catch (err) {
+                    // Wake lock request failed (e.g., low battery)
+                }
+            }
+        }
+        
+        function releaseWakeLock() {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
+        
+        // Reveal full UI after first rhythm check
+        function revealFullUI() {
+            var timerPage = document.querySelector('.timer-page');
+            if (timerPage.classList.contains('initial-state')) {
+                timerPage.classList.remove('initial-state');
+                $('timerGrid').classList.remove('hidden');
+            }
+        }
+        
+        // Color constants (matching CSS variables)
+        var COLOR_GREEN = '#44ff44';
+        var COLOR_RED = '#ff4444';
+        var COLOR_ORANGE = '#ffa500';
+        
+        function getTimerColor(remaining) {
+            if (remaining <= 0) return COLOR_RED;
+            if (remaining <= 10) return COLOR_RED;
+            if (remaining <= 30) return COLOR_ORANGE;
+            return COLOR_GREEN;
+        }
+        
+        function getAdrenalineColor(remaining) {
+            if (remaining <= 0) return COLOR_RED;
+            if (remaining <= 10) return COLOR_RED;
+            if (remaining <= 30) return COLOR_ORANGE;
+            return '#666'; // Neutral, not green - reduces visual competition
+        }
+        
+        function addLog(event) {
+            var now = new Date();
+            var timeStr = now.toTimeString().slice(0, 5);
+            log.push({ time: timeStr, event: event });
+            renderLog();
+            updateLogSummary();
+        }
+        
+        function updateLogSummary() {
+            if (log.length === 0) {
+                $('logSummary').style.display = 'none';
+                return;
+            }
+            
+            $('logSummary').style.display = 'block';
+            
+            // Build summary
+            var lines = [];
+            
+            // Arrest time
+            if (arrestStartTime) {
+                lines.push('Arrest time: ' + arrestStartTime.toTimeString().slice(0, 5));
+            }
+            
+            // Duration
+            var mins = Math.floor(totalSeconds / 60);
+            var secs = totalSeconds % 60;
+            lines.push('Duration: ' + mins + ' min ' + secs + ' sec');
+            
+            // Initial rhythm (find first VF/VT or PEA entry)
+            var initialRhythm = null;
+            for (var i = 0; i < log.length; i++) {
+                if (log[i].event.indexOf('VF/VT') !== -1) {
+                    initialRhythm = 'VF/VT (shockable)';
+                    break;
+                } else if (log[i].event.indexOf('PEA') !== -1 || log[i].event.indexOf('Asystole') !== -1) {
+                    initialRhythm = 'PEA/Asystole (non-shockable)';
+                    break;
+                }
+            }
+            if (initialRhythm) {
+                lines.push('Initial rhythm: ' + initialRhythm);
+            }
+            
+            // Shocks
+            if (shockCount > 0) {
+                lines.push('Shocks delivered: ' + shockCount);
+            }
+            
+            // Adrenaline
+            if (adrenalineCount > 0) {
+                lines.push('Adrenaline doses: ' + adrenalineCount);
+            }
+            
+            // ROSC periods
+            if (roscHistory.length > 0) {
+                var roscSummary = roscHistory.map(function(r) {
+                    return r.duration + ' (' + r.start + '–' + r.end + ')';
+                }).join(', ');
+                lines.push('ROSC periods: ' + roscSummary);
+            }
+            if (roscActive) {
+                lines.push('Current status: ROSC (ongoing from ' + roscTimeStr + ')');
+            }
+            
+            // Key decisions from log
+            var keyEvents = [];
+            log.forEach(function(entry) {
+                if (entry.event.indexOf('E-CPR:') !== -1) {
+                    keyEvents.push(entry.time + ' ' + entry.event);
+                }
+            });
+            if (keyEvents.length > 0) {
+                lines.push('');
+                lines.push('Key decisions:');
+                keyEvents.forEach(function(e) { lines.push('  ' + e); });
+            }
+            
+            $('logSummaryContent').textContent = lines.join('\n');
+        }
+        
+        // Tab switching
+        document.querySelectorAll('.tab-btn:not(.tab-more-btn)').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+                document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+                btn.classList.add('active');
+                $('tab-' + btn.getAttribute('data-tab')).classList.add('active');
+                $('tabMoreMenu').classList.add('hidden');
+            });
+        });
+        
+        // More menu toggle
+        $('tabMoreBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            $('tabMoreMenu').classList.toggle('hidden');
+        });
+        
+        // More menu items
+        document.querySelectorAll('.tab-more-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+                document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+                $('tabMoreBtn').classList.add('active');
+                $('tab-' + item.getAttribute('data-tab')).classList.add('active');
+                $('tabMoreMenu').classList.add('hidden');
+            });
+        });
+        
+        // Close More menu when clicking elsewhere
+        document.addEventListener('click', function() {
+            $('tabMoreMenu').classList.add('hidden');
+        });
+        
+        // Start resuscitation (fresh arrest)
+        function startFreshArrest() {
+            arrestStartTime = new Date();
+            arrestStartTime.setSeconds(0);
+            resusStarted = true;
+            addLog('Resuscitation started');
+            requestWakeLock();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(tick, 1000);
+            updateDisplay();
+            $('landingScreen').classList.add('hidden');
+            $('app').classList.remove('hidden');
+        }
+        
+        // Start resuscitation (mid-arrest join)
+        function startMidArrest(setupData) {
+            joinedMidArrest = true;
+            var now = new Date();
+            
+            // Set arrest start time
+            arrestStartTime = new Date(setupData.arrestTime);
+            
+            // Zero seconds on both times so preset durations are accurate
+            // (e.g., "3 mins ago" should show ~3:00, not 3:45)
+            now.setSeconds(0);
+            now.setMilliseconds(0);
+            arrestStartTime.setSeconds(0);
+            arrestStartTime.setMilliseconds(0);
+            
+            totalSeconds = Math.floor((now - arrestStartTime) / 1000);
+            
+            // Set shock count and rhythm
+            shockCount = setupData.shocks;
+            isShockableRhythm = setupData.isShockable;
+            
+            // Set amiodarone state
+            amiodaroneGiven = setupData.amiodaroneGiven || false;
+            
+            // Set adrenaline state
+            adrenalineCount = setupData.adrenalineCount;
+            
+            // Backfill log
+            var startTimeStr = formatTime(0);
+            log.push({ time: startTimeStr, event: 'Resuscitation started' });
+            log.push({ time: startTimeStr, event: 'Joined mid-arrest (' + Math.floor(totalSeconds / 60) + ' minutes in)' });
+            
+            if (shockCount > 0) {
+                log.push({ time: startTimeStr, event: 'Initial rhythm: Shockable (VF/VT)' });
+                log.push({ time: startTimeStr, event: 'Shocks prior to arrival: ' + shockCount });
+            } else if (isShockableRhythm === true) {
+                log.push({ time: startTimeStr, event: 'Initial rhythm: Shockable (VF/VT)' });
+            } else if (isShockableRhythm === false) {
+                log.push({ time: startTimeStr, event: 'Initial rhythm: Non-shockable (PEA/Asystole)' });
+            }
+            
+            if (amiodaroneGiven) {
+                log.push({ time: startTimeStr, event: 'Amiodarone given prior to arrival' });
+            }
+            
+            if (adrenalineCount > 0) {
+                log.push({ time: startTimeStr, event: 'Adrenaline given prior to arrival' });
+            }
+            
+            // Start timers
+            resusStarted = true;
+            requestWakeLock();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(tick, 1000);
+            
+            // Hide landing, show app
+            $('landingScreen').classList.add('hidden');
+            $('app').classList.remove('hidden');
+            
+            // Remove initial-state styling for mid-arrest join
+            document.querySelector('.timer-page').classList.remove('initial-state');
+            
+            // Handle rhythm state
+            if (setupData.rhythmNotChecked) {
+                // Show rhythm check buttons (same as fresh arrest)
+                rhythmCheckStarted = false;
+                updateDisplay();
+            } else {
+                // Skip rhythm check screen, go straight to timers
+                rhythmCheckStarted = true;
+                $('rhythmCheckBox').classList.add('hidden');
+                $('timerGrid').classList.remove('hidden');
+                $('btnRosc').classList.remove('hidden');
+                $('btnRoscHistory').classList.remove('hidden');
+                $('btnUpdateTime').classList.remove('hidden');
+                
+                if (isShockableRhythm) {
+                    $('shockCounter').classList.remove('hidden');
+                    $('shockCount').textContent = shockCount;
+                }
+                
+                // Set up adrenaline timer based on state
+                if (setupData.adrenalineState === 'given') {
+                    adrenalineStarted = true;
+                    adrenalineSeconds = 240;
+                    $('adrenalineTime').textContent = '4:00';
+                    $('adrNote').textContent = 'Next dose in 4 min';
+                } else if (setupData.adrenalineState === 'due') {
+                    adrenalineStarted = true;
+                    adrenalineSeconds = 60;
+                    $('adrenalineTime').textContent = '1:00';
+                    $('adrNote').textContent = 'Due soon';
+                } else {
+                    // None yet - check if should be due now
+                    var adrenalineDueNow = false;
+                    if (!isShockableRhythm) {
+                        // Non-shockable: adrenaline due immediately
+                        adrenalineDueNow = true;
+                    } else if (shockCount >= 2) {
+                        // Shockable with 2+ shocks: adrenaline due
+                        adrenalineDueNow = true;
+                    }
+                    
+                    if (adrenalineDueNow) {
+                        adrenalineStarted = true;
+                        adrenalineSeconds = 0;
+                        $('adrenalineTime').textContent = 'DUE';
+                        $('adrNote').textContent = 'Give now';
+                        $('adrenalineTimer').classList.add('overdue');
+                    } else {
+                        // Waiting for 2nd shock
+                        $('adrenalineTime').textContent = 'TAP';
+                        $('adrNote').textContent = 'After 2nd shock';
+                    }
+                }
+                
+                updateDisplay();
+                
+                // Trigger popups after short delay
+                setTimeout(function() {
+                    // Adrenaline popup if needed
+                    if (setupData.adrenalineState === 'none') {
+                        var needsAdrenalinePopup = false;
+                        var adrContext = '';
+                        if (!isShockableRhythm) {
+                            needsAdrenalinePopup = true;
+                            adrContext = 'Non-shockable rhythm';
+                        } else if (shockCount >= 2) {
+                            needsAdrenalinePopup = true;
+                            adrContext = shockCount + ' shocks given';
+                        }
+                        if (needsAdrenalinePopup) {
+                            $('adrReminderTitle').textContent = 'Adrenaline';
+                            $('adrReminderContext').textContent = adrContext;
+                            $('adrenalineReminderModal').classList.remove('hidden');
+                        }
+                    }
+                    
+                    // Amiodarone popup if needed (after adrenaline handled)
+                    setTimeout(function() {
+                        if (shockCount >= 3 && !amiodaroneGiven) {
+                            if (shockCount === 3) {
+                                $('amioTitle').textContent = '3rd Shock';
+                                $('amioDose').textContent = 'Amiodarone 300mg IV';
+                            } else if (shockCount === 5) {
+                                $('amioTitle').textContent = '5th Shock';
+                                $('amioDose').textContent = 'Amiodarone 150mg IV';
+                            } else {
+                                $('amioTitle').textContent = 'Shock #' + shockCount;
+                                $('amioDose').textContent = 'Amiodarone 150mg IV (if not already given)';
+                            }
+                            $('amioModal').classList.remove('hidden');
+                        }
+                    }, 500);
+                    
+                    // E-CPR popup if arrest >5 minutes
+                    setTimeout(function() {
+                        if (totalSeconds >= 420 && !ecprPromptDismissed) {
+                            $('ecprModal').classList.remove('hidden');
+                        }
+                    }, 1000);
+                }, 300);
+            }
+        }
+        
+        // Landing screen handlers
+        $('btnNewCode').addEventListener('click', startFreshArrest);
+        
+        $('btnCodeInProgress').addEventListener('click', function() {
+            // Populate hour and minute selects
+            var hoursEl = $('setupHours');
+            var minsEl = $('setupMinutes');
+            
+            // Clear and populate
+            hoursEl.innerHTML = '';
+            minsEl.innerHTML = '';
+            
+            for (var h = 0; h < 24; h++) {
+                var opt = document.createElement('option');
+                opt.value = h;
+                opt.textContent = (h < 10 ? '0' : '') + h;
+                hoursEl.appendChild(opt);
+            }
+            
+            for (var m = 0; m < 60; m++) {
+                var opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = (m < 10 ? '0' : '') + m;
+                minsEl.appendChild(opt);
+            }
+            
+            // Set default time to current time
+            var now = new Date();
+            hoursEl.value = now.getHours();
+            minsEl.value = now.getMinutes();
+            
+            $('setupModal').classList.remove('hidden');
+        });
+        
+        // Setup modal state
+        var setupState = {
+            timeMins: null,
+            customTime: null,
+            shocks: null,
+            shocksExact: null,
+            rhythm: null,
+            amio: null,
+            adrenaline: null
+        };
+        
+        function updateSetupValidation(showMessage) {
+            var valid = true;
+            var msg = '';
+            
+            if (setupState.timeMins === null && setupState.customTime === null) {
+                valid = false;
+                msg = 'Select time since collapse';
+            } else if (setupState.shocks === null) {
+                valid = false;
+                msg = 'Select number of shocks';
+            } else if (setupState.shocks === '3+' && setupState.shocksExact === null) {
+                valid = false;
+                msg = 'Select exact shock count';
+            } else if (setupState.shocks === '0' && setupState.rhythm === null) {
+                valid = false;
+                msg = 'Select initial rhythm';
+            } else if ((setupState.shocksExact !== null && parseInt(setupState.shocksExact, 10) >= 3) || 
+                       (setupState.shocks !== null && setupState.shocks !== '0' && setupState.shocks !== '3+' && parseInt(setupState.shocks, 10) >= 3)) {
+                // This shouldn't happen with current UI, but handle it
+            } else if (setupState.shocks === '3+' && setupState.amio === null) {
+                valid = false;
+                msg = 'Select if amiodarone given';
+            } else if (setupState.adrenaline === null) {
+                valid = false;
+                msg = 'Select adrenaline status';
+            }
+            
+            // Check if amio section should require answer
+            var effectiveShocks = setupState.shocks === '3+' ? 
+                (setupState.shocksExact ? parseInt(setupState.shocksExact, 10) : 3) : 
+                parseInt(setupState.shocks, 10);
+            if (effectiveShocks >= 3 && setupState.amio === null) {
+                valid = false;
+                msg = 'Select if amiodarone given';
+            }
+            
+            // Only show message if explicitly requested (e.g., on START click)
+            $('setupValidation').textContent = showMessage ? msg : '';
+            if (valid) {
+                $('btnStartSetup').classList.add('ready');
+            } else {
+                $('btnStartSetup').classList.remove('ready');
+            }
+            return valid;
+        }
+        
+        // Setup time buttons
+        $('setupTimeGroup').addEventListener('click', function(e) {
+            if (e.target.classList.contains('setup-btn')) {
+                $('setupTimeGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+                e.target.classList.add('selected');
+                var mins = e.target.getAttribute('data-mins');
+                if (mins === 'custom') {
+                    $('customTimeSection').classList.add('visible');
+                    setupState.timeMins = null;
+                    setupState.customTime = $('setupHours').value + ':' + $('setupMinutes').value;
+                } else {
+                    $('customTimeSection').classList.remove('visible');
+                    setupState.timeMins = parseInt(mins, 10);
+                    setupState.customTime = null;
+                }
+                updateSetupValidation();
+            }
+        });
+        
+        function updateCustomTime() {
+            setupState.customTime = $('setupHours').value + ':' + $('setupMinutes').value;
+            updateSetupValidation();
+        }
+        $('setupHours').addEventListener('change', updateCustomTime);
+        $('setupMinutes').addEventListener('change', updateCustomTime);
+        
+        // Setup shocks buttons
+        $('setupShocksGroup').addEventListener('click', function(e) {
+            if (e.target.classList.contains('setup-btn')) {
+                $('setupShocksGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+                e.target.classList.add('selected');
+                var shocks = e.target.getAttribute('data-shocks');
+                setupState.shocks = shocks;
+                setupState.shocksExact = null;
+                $('shocksExactSection').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+                
+                if (shocks === '3+') {
+                    $('shocksExactSection').classList.add('visible');
+                    $('setupAmioSection').classList.remove('hidden');
+                } else {
+                    $('shocksExactSection').classList.remove('visible');
+                    if (parseInt(shocks, 10) >= 3) {
+                        $('setupAmioSection').classList.remove('hidden');
+                    } else {
+                        $('setupAmioSection').classList.add('hidden');
+                        setupState.amio = null;
+                    }
+                }
+                
+                if (shocks === '0') {
+                    $('setupRhythmSection').classList.remove('hidden');
+                } else {
+                    $('setupRhythmSection').classList.add('hidden');
+                    setupState.rhythm = null;
+                }
+                
+                updateSetupValidation();
+            }
+        });
+        
+        // Setup exact shocks buttons
+        $('shocksExactSection').addEventListener('click', function(e) {
+            if (e.target.classList.contains('setup-btn')) {
+                $('shocksExactSection').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+                e.target.classList.add('selected');
+                setupState.shocksExact = e.target.getAttribute('data-shocks-exact');
+                updateSetupValidation();
+            }
+        });
+        
+        // Setup rhythm buttons
+        $('setupRhythmGroup').addEventListener('click', function(e) {
+            if (e.target.classList.contains('setup-btn')) {
+                $('setupRhythmGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+                e.target.classList.add('selected');
+                setupState.rhythm = e.target.getAttribute('data-rhythm');
+                updateSetupValidation();
+            }
+        });
+        
+        // Setup amio buttons
+        $('setupAmioGroup').addEventListener('click', function(e) {
+            if (e.target.classList.contains('setup-btn')) {
+                $('setupAmioGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+                e.target.classList.add('selected');
+                setupState.amio = e.target.getAttribute('data-amio');
+                updateSetupValidation();
+            }
+        });
+        
+        // Setup adrenaline buttons
+        $('setupAdrenalineGroup').addEventListener('click', function(e) {
+            if (e.target.classList.contains('setup-btn')) {
+                $('setupAdrenalineGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+                e.target.classList.add('selected');
+                setupState.adrenaline = e.target.getAttribute('data-adr');
+                updateSetupValidation();
+            }
+        });
+        
+        // Cancel setup
+        $('btnCancelSetup').addEventListener('click', function() {
+            $('setupModal').classList.add('hidden');
+            // Reset state
+            setupState = { timeMins: null, customTime: null, shocks: null, shocksExact: null, rhythm: null, amio: null, adrenaline: null };
+            $('setupTimeGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+            $('setupShocksGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+            $('shocksExactSection').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+            $('setupRhythmGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+            $('setupAmioGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+            $('setupAdrenalineGroup').querySelectorAll('.setup-btn').forEach(function(b) { b.classList.remove('selected'); });
+            $('customTimeSection').classList.remove('visible');
+            $('shocksExactSection').classList.remove('visible');
+            $('setupRhythmSection').classList.add('hidden');
+            $('setupAmioSection').classList.add('hidden');
+            $('btnStartSetup').classList.remove('ready');
+            $('setupValidation').textContent = '';
+        });
+        
+        // Start tracking from setup
+        $('btnStartSetup').addEventListener('click', function() {
+            if (!updateSetupValidation(true)) return;
+            
+            // Calculate arrest time
+            var arrestTime;
+            if (setupState.timeMins !== null) {
+                arrestTime = new Date();
+                arrestTime.setMinutes(arrestTime.getMinutes() - setupState.timeMins);
+            } else {
+                arrestTime = new Date();
+                var parts = setupState.customTime.split(':');
+                arrestTime.setHours(parseInt(parts[0], 10) || 0);
+                arrestTime.setMinutes(parseInt(parts[1], 10) || 0);
+                // If time is in future, assume yesterday
+                if (arrestTime > new Date()) {
+                    arrestTime.setDate(arrestTime.getDate() - 1);
+                }
+            }
+            
+            // Calculate effective shocks
+            var effectiveShocks;
+            if (setupState.shocks === '3+') {
+                effectiveShocks = setupState.shocksExact === '6+' ? 6 : parseInt(setupState.shocksExact, 10);
+            } else {
+                effectiveShocks = parseInt(setupState.shocks, 10);
+            }
+            
+            // Determine if shockable
+            var isShockable;
+            var rhythmNotChecked = false;
+            if (effectiveShocks > 0) {
+                isShockable = true;
+            } else if (setupState.rhythm === 'shockable') {
+                isShockable = true;
+            } else if (setupState.rhythm === 'nonshockable') {
+                isShockable = false;
+            } else {
+                // Not yet checked
+                isShockable = null;
+                rhythmNotChecked = true;
+            }
+            
+            // Adrenaline state
+            var adrenalineState = setupState.adrenaline;
+            var adrenalineCount = (adrenalineState === 'given' || adrenalineState === 'due') ? 1 : 0;
+            
+            // Build setup data
+            var data = {
+                arrestTime: arrestTime,
+                shocks: effectiveShocks,
+                isShockable: isShockable,
+                rhythmNotChecked: rhythmNotChecked,
+                amiodaroneGiven: setupState.amio === 'yes',
+                adrenalineState: adrenalineState,
+                adrenalineCount: adrenalineCount
+            };
+            
+            $('setupModal').classList.add('hidden');
+            startMidArrest(data);
+        });
+        
+        
+        // Update arrest time handlers
+        $('btnUpdateTime').addEventListener('click', function() {
+            if (!arrestStartTime) return;
+            var hours = (arrestStartTime.getHours() < 10 ? '0' : '') + arrestStartTime.getHours();
+            var mins = (arrestStartTime.getMinutes() < 10 ? '0' : '') + arrestStartTime.getMinutes();
+            $('updateTime').value = hours + ':' + mins;
+            $('updateTimeModal').classList.remove('hidden');
+        });
+        
+        // Also allow clicking the header time to update
+        $('headerLeft').addEventListener('click', function() {
+            if (!arrestStartTime) return;
+            var hours = (arrestStartTime.getHours() < 10 ? '0' : '') + arrestStartTime.getHours();
+            var mins = (arrestStartTime.getMinutes() < 10 ? '0' : '') + arrestStartTime.getMinutes();
+            $('updateTime').value = hours + ':' + mins;
+            $('updateTimeModal').classList.remove('hidden');
+        });
+        
+        $('btnCancelUpdate').addEventListener('click', function() {
+            $('updateTimeModal').classList.add('hidden');
+        });
+        
+        $('btnConfirmUpdate').addEventListener('click', function() {
+            var now = new Date();
+            var newStartTime = new Date();
+            var timeVal = $('updateTime').value;
+            if (timeVal) {
+                var parts = timeVal.split(':');
+                newStartTime.setHours(parseInt(parts[0], 10) || 0);
+                newStartTime.setMinutes(parseInt(parts[1], 10) || 0);
+            }
+            newStartTime.setSeconds(0);
+            if (newStartTime > now) newStartTime.setDate(newStartTime.getDate() - 1);
+            
+            var oldMins = Math.floor(totalSeconds / 60);
+            arrestStartTime = newStartTime;
+            totalSeconds = Math.floor((now - newStartTime) / 1000);
+            var newMins = Math.floor(totalSeconds / 60);
+            
+            addLog('Arrest time updated: ' + oldMins + ' → ' + newMins + ' min');
+            $('updateTimeModal').classList.add('hidden');
+            updateDisplay();
+        });
+        
+        // DEVELOPER NOTE: Timer drift consideration
+        // setInterval can drift on busy devices. For sub-second accuracy, consider computing
+        // elapsed time from timestamps each tick instead of incrementing counters:
+        //   totalSeconds = Math.floor((Date.now() - arrestStartTime) / 1000);
+        //   cprSeconds = CPR_INTERVAL - Math.floor((Date.now() - lastRhythmCheckTime) / 1000);
+        //   adrenalineSeconds = ADRENALINE_INTERVAL - Math.floor((Date.now() - lastAdrenalineTime) / 1000);
+        // For typical 30-60 min resuscitations, drift is likely <5 seconds, which is clinically acceptable.
+        
+        function tick() {
+            totalSeconds++;
+            if (!roscActive) {
+                // Only countdown CPR if rhythm check has started
+                if (rhythmCheckStarted) {
+                    cprSeconds--;
+                    if (cprSeconds === 0) {
+                        vibrate([200, 100, 200, 100, 200]);
+                        playAlert('rhythm');
+                    }
+                    if (cprSeconds < 0 && cprSeconds % 10 === 0) vibrate([50, 50, 50]);
+                }
+                if (adrenalineStarted) {
+                    adrenalineSeconds--;
+                    if (adrenalineSeconds === 0) {
+                        vibrate([300, 100, 300]);
+                        playAlert('adrenaline');
+                    }
+                }
+            }
+            
+            if (ecprRemindTime && totalSeconds >= ecprRemindTime) {
+                $('ecprModal').classList.remove('hidden');
+                ecprRemindTime = null;
+            }
+            
+            // E-CPR prompt at 7 minutes if not already shown
+            if (totalSeconds === 420 && !ecprPromptDismissed) {
+                $('ecprModal').classList.remove('hidden');
+            }
+            
+            updateDisplay();
+            
+            // Update summary every 10 seconds
+            if (totalSeconds % 10 === 0) updateLogSummary();
+        }
+        
+        function updateDisplay() {
+            $('totalTime').textContent = resusStarted ? formatTimeHMS(totalSeconds) : '--:--';
+            
+            var cprBox = $('rhythmCheckBox');
+            var cprTimeEl = $('cprTime');
+            var cprHint = $('cprHint');
+            
+            if (resusStarted) {
+                if (roscActive) {
+                    cprTimeEl.textContent = 'ROSC';
+                    cprTimeEl.classList.remove('hidden');
+                    cprTimeEl.style.color = '#44ff44';
+                    cprBox.style.borderColor = '#44ff44';
+                    cprBox.classList.remove('expired');
+                    cprHint.textContent = '';
+                } else if (!rhythmCheckStarted) {
+                    // Hide timer, just show buttons
+                    cprTimeEl.classList.add('hidden');
+                    cprBox.style.borderColor = '#666';
+                    cprBox.classList.remove('expired');
+                    cprHint.textContent = '';
+                } else {
+                    var color = getTimerColor(cprSeconds);
+                    cprTimeEl.textContent = formatTime(cprSeconds);
+                    cprTimeEl.classList.remove('hidden');
+                    cprTimeEl.style.color = color;
+                    cprBox.style.borderColor = color;
+                    cprBox.classList.toggle('expired', cprSeconds <= 0);
+                    cprHint.textContent = cprSeconds <= 0 ? 'OVERDUE' : '';
+                }
+                
+                // Update label based on state
+                $('rhythmCheckLabel').textContent = rhythmCheckStarted ? 'NEXT RHYTHM CHECK DUE' : 'Rhythm Check';
+            }
+            
+            var adrBox = $('adrenalineTimer');
+            var adrTimeEl = $('adrenalineTime');
+            var adrHint = $('adrHint');
+            var adrNote = $('adrNote');
+            
+            if (roscActive) {
+                adrTimeEl.textContent = '—';
+                adrTimeEl.style.color = '#666';
+                adrBox.style.borderColor = '#666';
+                adrBox.classList.remove('expired');
+                adrHint.textContent = '';
+                adrNote.style.display = 'none';
+            } else if (adrenalineStarted) {
+                var adrColor = getAdrenalineColor(adrenalineSeconds);
+                adrTimeEl.textContent = formatTime(adrenalineSeconds);
+                adrTimeEl.style.color = adrColor;
+                adrBox.style.borderColor = adrColor;
+                adrBox.classList.toggle('expired', adrenalineSeconds <= 0);
+                adrHint.textContent = adrenalineSeconds <= 0 ? 'OVERDUE' : '';
+                adrNote.style.display = 'none';
+                $('adrenalineLabel').textContent = 'NEXT ADRENALINE DUE';
+            } else {
+                adrTimeEl.textContent = 'TAP';
+                adrTimeEl.style.color = '#666';
+                adrBox.style.borderColor = '#666';
+                adrHint.textContent = '';
+                adrNote.style.display = 'block';
+                adrNote.textContent = 'Tap when given';
+                $('adrenalineLabel').textContent = 'Adrenaline';
+            }
+            
+            // Shock counter display
+            if (shockCount > 0) {
+                $('shockCount').textContent = shockCount;
+                $('shockHint').textContent = 'Tap +1 · Hold -1';
+            } else {
+                $('shockCount').textContent = 'TAP';
+                $('shockHint').textContent = 'Tap when given';
+            }
+            
+            // ROSC button and display
+            var roscBtn = $('btnRosc');
+            var roscHistoryBtn = $('btnRoscHistory');
+            var updateTimeBtn = $('btnUpdateTime');
+            if (resusStarted && rhythmCheckStarted) {
+                roscBtn.classList.remove('hidden');
+                updateTimeBtn.classList.remove('hidden');
+                if (roscActive) {
+                    roscBtn.textContent = '⚠ Re-arrest';
+                    roscBtn.classList.add('rearrest');
+                    $('roscDisplay').textContent = 'ROSC at ' + roscTimeStr;
+                    roscHistoryBtn.classList.add('hidden');
+                } else {
+                    roscBtn.textContent = '✓ ROSC';
+                    roscBtn.classList.remove('rearrest');
+                    $('roscDisplay').textContent = '';
+                    // Show ROSC history button if there's history
+                    if (roscHistory.length > 0) {
+                        roscHistoryBtn.classList.remove('hidden');
+                    } else {
+                        roscHistoryBtn.classList.add('hidden');
+                    }
+                }
+            } else {
+                roscBtn.classList.add('hidden');
+                roscHistoryBtn.classList.add('hidden');
+                updateTimeBtn.classList.add('hidden');
+            }
+            
+            // Auto-sync prognosis calculator time (IHCA)
+            if (resusStarted && $('autoSyncTime').checked) {
+                var newMins = Math.floor(totalSeconds / 60);
+                if (newMins !== calcMins) {
+                    calcMins = newMins;
+                    $('arrestMins').value = calcMins;
+                }
+            }
+            
+            // Auto-sync OOHCA calculator time
+            if (resusStarted && oohcaAutoSync) {
+                var newOohcaMins = Math.floor(totalSeconds / 60);
+                if (newOohcaMins !== oohcaMins) {
+                    oohcaMins = newOohcaMins;
+                    $('oohcaMins').value = oohcaMins;
+                    updateOOHCACalc();
+                }
+            }
+            
+            updatePrognosisCalc();
+            
+            // Header alert when not on timer tab and timers are due
+            var headerAlert = $('headerAlert');
+            var onTimerTab = $('tab-timer').classList.contains('active');
+            var alerts = [];
+            
+            if (!roscActive && resusStarted) {
+                if (rhythmCheckStarted && cprSeconds <= 10) {
+                    alerts.push('Rhythm check ' + (cprSeconds <= 0 ? 'OVERDUE' : 'due'));
+                }
+                if (adrenalineStarted && adrenalineSeconds <= 10) {
+                    alerts.push('Adrenaline ' + (adrenalineSeconds <= 0 ? 'OVERDUE' : 'due'));
+                }
+            }
+            
+            if (!onTimerTab && alerts.length > 0) {
+                headerAlert.textContent = alerts.join(' · ');
+                headerAlert.classList.add('show');
+            } else {
+                headerAlert.classList.remove('show');
+            }
+        }
+        
+        // VF/VT button - prompts for shock confirmation
+        $('btnVfVt').addEventListener('click', function() {
+            if (!resusStarted || roscActive) return;
+            $('shockConfirmModal').classList.remove('hidden');
+        });
+        
+        // Shock confirmation modal handlers
+        $('shockYes').addEventListener('click', function() {
+            shockCount++;
+            rhythmCheckCount++;
+            rhythmCheckStarted = true;
+            $('shockCounter').classList.remove('hidden');
+            revealFullUI();
+            cprSeconds = 120;
+            vibrate(50);
+            addLog('Rhythm check #' + rhythmCheckCount + ' (VF/VT) – Shock #' + shockCount);
+            $('shockConfirmModal').classList.add('hidden');
+            
+            // Adrenaline prompt after 2nd shock if not already given
+            if (shockCount === 2 && adrenalineCount === 0) {
+                $('adrReminderTitle').textContent = 'Adrenaline';
+                $('adrReminderContext').textContent = '2nd shock delivered';
+                $('adrenalineReminderModal').classList.remove('hidden');
+                // E-CPR modal will show after adrenaline response (handled in adrReminderYes/Omit)
+            } else if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
+                // Only show E-CPR if we didn't show adrenaline modal
+                $('ecprModal').classList.remove('hidden');
+            }
+            
+            // Amiodarone prompts
+            if (shockCount === 3 && !amiodaroneGiven) {
+                $('amioTitle').textContent = '3rd Shock';
+                $('amioDose').textContent = 'Amiodarone 300mg IV';
+                $('amioModal').classList.remove('hidden');
+            }
+            if (shockCount === 5 && !amiodaroneGiven) {
+                $('amioTitle').textContent = '5th Shock';
+                $('amioDose').textContent = 'Amiodarone 150mg IV';
+                $('amioModal').classList.remove('hidden');
+            }
+            
+            updateDisplay();
+        });
+        
+        $('shockNo').addEventListener('click', function() {
+            rhythmCheckCount++;
+            rhythmCheckStarted = true;
+            $('shockCounter').classList.remove('hidden');
+            revealFullUI();
+            cprSeconds = 120;
+            vibrate(50);
+            addLog('Rhythm check #' + rhythmCheckCount + ' (VF/VT) – No shock');
+            $('shockConfirmModal').classList.add('hidden');
+            if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
+                $('ecprModal').classList.remove('hidden');
+            }
+            updateDisplay();
+        });
+        
+        // PEA/Asystole button
+        $('btnPea').addEventListener('click', function() {
+            if (!resusStarted || roscActive) return;
+            rhythmCheckCount++;
+            rhythmCheckStarted = true;
+            revealFullUI();
+            cprSeconds = 120;
+            vibrate(50);
+            addLog('Rhythm check #' + rhythmCheckCount + ' (PEA/Asystole)');
+            
+            // Reminder about adrenaline if not already given
+            if (!adrenalineStarted) {
+                $('adrReminderTitle').textContent = 'Adrenaline';
+                $('adrReminderContext').textContent = 'Non-shockable rhythm';
+                $('adrenalineReminderModal').classList.remove('hidden');
+            } else if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
+                $('ecprModal').classList.remove('hidden');
+            }
+            updateDisplay();
+        });
+        
+        $('adrReminderYes').addEventListener('click', function() {
+            // Record adrenaline given
+            adrenalineCount++;
+            adrenalineStarted = true;
+            adrenalineSeconds = 240;
+            vibrate(50);
+            addLog('Adrenaline #' + adrenalineCount + ' given');
+            $('adrenalineReminderModal').classList.add('hidden');
+            if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
+                $('ecprModal').classList.remove('hidden');
+            }
+            updateDisplay();
+        });
+        
+        $('adrReminderOmit').addEventListener('click', function() {
+            $('adrenalineReminderModal').classList.add('hidden');
+            if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
+                $('ecprModal').classList.remove('hidden');
+            }
+        });
+        
+        // Adrenaline Timer tap
+        $('adrenalineTimer').addEventListener('click', function() {
+            if (!resusStarted || roscActive) return;
+            adrenalineCount++;
+            adrenalineStarted = true;
+            adrenalineSeconds = 240;
+            vibrate(50);
+            addLog('Adrenaline #' + adrenalineCount + ' given');
+            updateDisplay();
+        });
+        
+        // Shock counter
+        var shockPressTimer = null;
+        var shockHandled = false;
+        
+        $('shockCounter').addEventListener('mousedown', handleShockDown);
+        $('shockCounter').addEventListener('mouseup', handleShockUp);
+        $('shockCounter').addEventListener('touchstart', handleShockDown, { passive: false });
+        $('shockCounter').addEventListener('touchend', handleShockUp, { passive: false });
+        
+        function handleShockDown(e) {
+            e.preventDefault();
+            shockHandled = false;
+            shockPressTimer = setTimeout(function() {
+                if (shockCount > 0) {
+                    shockCount--;
+                    vibrate([50, 50, 50]);
+                    addLog('Shock removed (now ' + shockCount + ')');
+                    updateDisplay();
+                }
+                shockHandled = true;
+            }, 800);
+        }
+        
+        function handleShockUp(e) {
+            e.preventDefault();
+            if (shockPressTimer) { clearTimeout(shockPressTimer); shockPressTimer = null; }
+            if (!shockHandled) {
+                shockCount++;
+                vibrate(50);
+                addLog('Shock #' + shockCount);
+                if (shockCount === 3 && !amiodaroneGiven) {
+                    $('amioTitle').textContent = '3rd Shock';
+                    $('amioDose').textContent = 'Amiodarone 300mg IV';
+                    $('amioModal').classList.remove('hidden');
+                }
+                if (shockCount === 5 && !amiodaroneGiven) {
+                    $('amioTitle').textContent = '5th Shock';
+                    $('amioDose').textContent = 'Amiodarone 150mg IV';
+                    $('amioModal').classList.remove('hidden');
+                }
+                updateDisplay();
+            }
+        }
+        
+        // Modals
+        $('ecprYes').addEventListener('click', function() {
+            $('ecprModal').classList.add('hidden');
+            addLog('E-CPR: Yes - calling for ECMO');
+            ecprPromptDismissed = true;
+        });
+        
+        $('ecprAssess').addEventListener('click', function() {
+            $('ecprModal').classList.add('hidden');
+            // Switch to E-CPR tab
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+            document.querySelector('[data-tab="ecpr"]').classList.add('active');
+            $('tab-ecpr').classList.add('active');
+            addLog('E-CPR: Assessing suitability');
+        });
+        
+        $('ecprRemind').addEventListener('click', function() {
+            $('ecprModal').classList.add('hidden');
+            ecprRemindTime = totalSeconds + 300;
+            addLog('E-CPR: Remind in 5 min');
+        });
+        
+        $('ecprNo').addEventListener('click', function() {
+            $('ecprModal').classList.add('hidden');
+            addLog('E-CPR: Not appropriate/available');
+            ecprPromptDismissed = true;
+        });
+        
+        $('amioGiven').addEventListener('click', function() { 
+            $('amioModal').classList.add('hidden');
+            amiodaroneGiven = true;
+            addLog('Amiodarone given');
+            // Show E-CPR if this was rhythm check #2 and not yet dismissed
+            if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
+                $('ecprModal').classList.remove('hidden');
+            }
+        });
+        
+        $('amioOmitted').addEventListener('click', function() { 
+            $('amioModal').classList.add('hidden');
+            amiodaroneGiven = true; // Mark as handled so it doesn't prompt again
+            addLog('Amiodarone omitted');
+            // Show E-CPR if this was rhythm check #2 and not yet dismissed
+            if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
+                $('ecprModal').classList.remove('hidden');
+            }
+        });
+        
+        // ROSC / Re-arrest button
+        $('btnRosc').addEventListener('click', function() {
+            if (!resusStarted) return;
+            
+            if (!roscActive) {
+                // ROSC achieved
+                roscActive = true;
+                roscStartTime = new Date();
+                var now = roscStartTime;
+                roscTimeStr = now.toTimeString().slice(0, 5);
+                addLog('ROSC achieved');
+                vibrate([100, 50, 100, 50, 100]);
+            } else {
+                // Re-arrest - save ROSC period to history
+                var endTime = new Date();
+                var durationSecs = Math.floor((endTime - roscStartTime) / 1000);
+                var durationMins = Math.floor(durationSecs / 60);
+                var durationStr = durationMins + ' min' + (durationSecs % 60 > 0 ? ' ' + (durationSecs % 60) + ' sec' : '');
+                roscHistory.push({
+                    start: roscTimeStr,
+                    end: endTime.toTimeString().slice(0, 5),
+                    duration: durationStr,
+                    durationMins: durationMins
+                });
+                roscActive = false;
+                rhythmCheckStarted = false;
+                cprSeconds = 120;
+                adrenalineSeconds = 240;
+                adrenalineStarted = false;
+                addLog('Re-arrest (ROSC duration: ' + durationStr + ')');
+                vibrate([200, 100, 200]);
+            }
+            updateDisplay();
+        });
+        
+        // ROSC history button
+        $('btnRoscHistory').addEventListener('click', function() {
+            var content = '';
+            if (roscHistory.length === 0) {
+                content = '<p style="color: #888; text-align: center;">No previous ROSC periods recorded</p>';
+            } else {
+                roscHistory.forEach(function(period, i) {
+                    content += '<div class="rosc-history-item">';
+                    content += '<div class="duration">' + period.duration + ' of ROSC</div>';
+                    content += '<div class="times">' + period.start + ' – ' + period.end + '</div>';
+                    content += '</div>';
+                });
+            }
+            $('roscHistoryContent').innerHTML = content;
+            $('roscHistoryModal').classList.remove('hidden');
+        });
+        
+        $('roscHistoryClose').addEventListener('click', function() {
+            $('roscHistoryModal').classList.add('hidden');
+        });
+        
+        // Hs & Ts
+        var actionItems = [
+            { id: 'airway', label: 'SGA/ETT (confirmed with EtCO₂) delivering 100% O₂' },
+            { id: 'fluid', label: 'Fluid bolus' },
+            { id: 'gas', label: 'Blood gas for pH, K⁺, BSL and Hb' },
+            { id: 'toxins', label: 'Check chart for toxins' },
+            { id: 'pneumo', label: 'Consider tension pneumothorax (?midline trachea ?difficult to ventilate)', arrow: '→ Finger thoracostomy' },
+            { id: 'echo', label: 'Echo to check for tamponade' },
+            { id: 'haem', label: 'Consider haemorrhage', arrow: '→ reverse anticoag, activate MTP' },
+            { id: 'ami', label: 'Consider AMI', arrow: '→ cath lab' },
+            { id: 'pe', label: 'Consider PE', arrow: '→ thrombolyse' },
+            { id: 'artline', label: 'Consider art line', arrow: '→ dose adrenaline to dBP >35' },
+            { id: 'mechcpr', label: 'Consider mechanical CPR' },
+            { id: 'family', label: 'Home team and family called' }
+        ];
+        
+        function renderHTs() {
+            var actionsHTML = '';
+            // Sort: unchecked items first, checked items at bottom
+            var sortedItems = actionItems.slice().sort(function(a, b) {
+                var aChecked = htChecked[a.id] ? 1 : 0;
+                var bChecked = htChecked[b.id] ? 1 : 0;
+                return aChecked - bChecked;
+            });
+            sortedItems.forEach(function(item) {
+                var checked = htChecked[item.id] ? ' checked' : '';
+                var arrow = item.arrow ? '<span class="check-arrow">' + item.arrow + '</span>' : '';
+                actionsHTML += '<div class="check-item' + checked + '" data-id="' + item.id + '"><div class="check-box">' + (htChecked[item.id] ? '✓' : '') + '</div><div class="check-label">' + item.label + arrow + '</div></div>';
+            });
+            $('actionsList').innerHTML = actionsHTML;
+        }
+        
+        // Event delegation for checklist
+        $('actionsList').addEventListener('click', function(e) {
+            var item = e.target.closest('.check-item');
+            if (item) {
+                var id = item.getAttribute('data-id');
+                htChecked[id] = !htChecked[id];
+                if (htChecked[id]) addLog('Checked: ' + id);
+                renderHTs();
+            }
+        });
+        renderHTs();
+        
+        // Drugs
+        // Drug categories for clear mental model
+        var coreDrugs = [
+            { name: 'Adrenaline 1mg/10mL', indication: 'Immediately for non-shockable, after 2nd shock for shockable', dose: '10mL IV q3-5min' },
+            { name: 'Amiodarone 150mg/3mL', indication: 'Refractory VF/VT', dose: '2 amps + 14mL G5% = 20mL. Give 20mL after 3rd shock, 10mL after 5th' },
+            { name: 'Lignocaine 1% 100mg/10mL', indication: 'Alternative to Amiodarone for refractory VF/VT', dose: '10mL IV bolus' },
+            { name: 'Magnesium sulfate 49.3% 10mmol/5mL', indication: 'Torsades de pointes, hypomagnesaemia', dose: '5mL IV over 1-2 min' }
+        ];
+        
+        var electrolyteDrugs = [
+            { name: 'Calcium gluconate 10% 10mL', indication: 'Hyperkalaemia, hypocalcaemia, CCB OD, hypermagnesaemia', dose: '30mL (3 amps) IV' },
+            { name: 'Sodium bicarbonate 8.4% 50mL', indication: 'Hyperkalaemia, TCA OD, severe acidosis', dose: '50-100mL IV' },
+            { name: 'Insulin (Actrapid) + Glucose 50%', indication: 'Hyperkalaemia', dose: '10 units + 50mL glucose IV' },
+            { name: 'Potassium chloride 10mmol/10mL', indication: 'Hypokalaemia (K⁺ <2.5)', dose: '20mL via CVC over 10 min' }
+        ];
+        
+        var causesDrugs = [
+            { name: 'Alteplase 50mg vial', indication: 'Massive PE. Continue CPR 60-90 min post-lysis', dose: '50mg IV bolus, repeat at 15 min' }
+        ];
+        
+        var toxidromeDrugs = [
+            { name: 'Intralipid 20%', indication: 'Local anaesthetic toxicity', dose: '1.5mL/kg bolus → 15mL/kg/hr. Repeat bolus x2 q5min. Max 12mL/kg' },
+            { name: 'Sodium bicarbonate 8.4%', indication: 'TCA toxicity (QRS >100ms)', dose: '100mL IV bolus' },
+            { name: 'Hydroxocobalamin 5g vial', indication: 'Cyanide (smoke inhalation, nitroprusside)', dose: '5g IV over 15 min, repeat to max 15g' },
+            { name: 'Digoxin immune Fab (DigiFab)', indication: 'Digoxin toxicity', dose: 'Per toxicology advice' },
+            { name: 'Atropine 1.2mg/1.5mL', indication: 'Organophosphate / nerve agent poisoning', dose: '1.2-3mg IV, repeat q5min PRN' },
+            { name: 'Glucagon 1mg vial', indication: 'Beta-blocker / CCB toxicity', dose: '5-10mg IV bolus (5-10 vials)' }
+        ];
+        
+        function renderDrug(d) {
+            var indicationHTML = d.indication ? '<div class="drug-indication">' + d.indication + '</div>' : '';
+            return '<div class="drug-item"><div class="drug-left"><div class="drug-name">' + d.name + '</div>' + indicationHTML + '</div><div class="drug-dose">' + d.dose + '</div></div>';
+        }
+        
+        $('coreDrugsList').innerHTML = coreDrugs.map(renderDrug).join('');
+        $('electrolyteSection').innerHTML = electrolyteDrugs.map(renderDrug).join('');
+        $('causesSection').innerHTML = causesDrugs.map(renderDrug).join('');
+        $('toxidromeSection').innerHTML = toxidromeDrugs.map(renderDrug).join('');
+        
+        // Drug section toggles
+        document.querySelectorAll('.drug-section-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var sectionId = btn.getAttribute('data-section');
+                var section = $(sectionId);
+                var isOpen = section.classList.contains('show');
+                
+                // Close all sections first
+                document.querySelectorAll('.drug-section').forEach(function(s) { s.classList.remove('show'); });
+                document.querySelectorAll('.drug-section-toggle').forEach(function(b) { 
+                    b.textContent = '▶ ' + b.textContent.substring(2);
+                });
+                
+                // Open this one if it was closed
+                if (!isOpen) {
+                    section.classList.add('show');
+                    btn.textContent = '▼ ' + btn.textContent.substring(2);
+                }
+            });
+        });
+        
+        // Prognosis calculator
+        function renderCalcButtons() {
+            $('ageButtons').innerHTML = ['<60', '60-79', '>=80'].map(function(a) {
+                return '<button class="calc-btn' + (calcAge === a ? ' active' : '') + '" data-calc="age" data-value="' + a + '">' + (a === '>=80' ? '≥80' : a) + '</button>';
+            }).join('');
+            
+            $('witnessedButtons').innerHTML = [['witnessed', 'Witnessed'], ['unwitnessed', 'Unwitnessed']].map(function(o) {
+                return '<button class="calc-btn' + (calcWitnessed === o[0] ? ' active' : '') + '" data-calc="witnessed" data-value="' + o[0] + '">' + o[1] + '</button>';
+            }).join('');
+            
+            $('rhythmButtons').innerHTML = [['shockable', 'Shockable'], ['nonshockable', 'Non-shockable']].map(function(o) {
+                return '<button class="calc-btn' + (calcRhythm === o[0] ? ' active' : '') + '" data-calc="rhythm" data-value="' + o[0] + '">' + o[1] + '</button>';
+            }).join('');
+            
+            document.querySelectorAll('[data-calc]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var field = btn.getAttribute('data-calc');
+                    var value = btn.getAttribute('data-value');
+                    if (field === 'age') calcAge = value;
+                    if (field === 'witnessed') calcWitnessed = value;
+                    if (field === 'rhythm') calcRhythm = value;
+                    renderCalcButtons();
+                    updatePrognosisCalc();
+                });
+            });
+        }
+        
+        // Populate arrest minutes select (0-60)
+        (function() {
+            var minsSelect = $('arrestMins');
+            for (var i = 0; i <= 60; i++) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                minsSelect.appendChild(opt);
+            }
+        })();
+        
+        $('arrestMins').addEventListener('change', function() {
+            calcMins = parseInt($('arrestMins').value, 10) || 0;
+            // Disable auto-sync when manually editing
+            $('autoSyncTime').checked = false;
+            updatePrognosisCalc();
+        });
+        
+        // Auto-sync is handled in updateDisplay()
+        
+        function updatePrognosisCalc() {
+            var survEl = $('survivalPercent');
+            var neuroEl = $('neuroPercent');
+            
+            // Check if all inputs are selected
+            if (calcAge === null || calcWitnessed === null || calcRhythm === null) {
+                survEl.textContent = '—';
+                survEl.className = 'prog-value';
+                neuroEl.textContent = '—';
+                neuroEl.className = 'prog-value';
+                return;
+            }
+            
+            var key = calcWitnessed + '-' + calcRhythm;
+            var survData = survivalData[calcAge] ? survivalData[calcAge][key] : {};
+            var neuroData = favorableOutcomeData[calcAge] ? favorableOutcomeData[calcAge][key] : {};
+            if (!survData) survData = {};
+            if (!neuroData) neuroData = {};
+            
+            // Get current values based on arrest duration
+            function getValueForTime(data, mins) {
+                if (!data) return undefined;
+                if (mins <= 1) return data[1];
+                if (mins <= 10) return data[10];
+                if (mins <= 20) return data[20];
+                if (mins <= 30) return data[30];
+                if (mins <= 40) return data[40];
+                if (mins <= 50) return data[50];
+                if (mins <= 60) return data[60];
+                // Beyond 60 min, use 60 min data if available
+                return data[60];
+            }
+            
+            var currentSurv = getValueForTime(survData, calcMins);
+            var currentNeuro = getValueForTime(neuroData, calcMins);
+            
+            // Helper to determine color class from range string
+            function getRangeClass(rangeStr) {
+                if (rangeStr === '<1%' || rangeStr === '<2%') return 'bad';
+                if (rangeStr === '2-5%' || rangeStr === '5-10%') return 'medium';
+                return 'good'; // 10-20%, 20-30%, >30%
+            }
+            
+            // Survival now uses string ranges
+            if (currentSurv !== undefined && currentSurv !== null) {
+                survEl.textContent = currentSurv;
+                survEl.className = 'prog-value ' + getRangeClass(currentSurv);
+            } else {
+                survEl.textContent = '—';
+                survEl.className = 'prog-value';
+            }
+            
+            // Neuro outcome uses string ranges
+            if (currentNeuro !== undefined && currentNeuro !== null) {
+                neuroEl.textContent = currentNeuro;
+                neuroEl.className = 'prog-value ' + getRangeClass(currentNeuro);
+            } else {
+                neuroEl.textContent = '—';
+                neuroEl.className = 'prog-value';
+            }
+        }
+        
+        renderCalcButtons();
+        
+        // Prognosis toggle (IHCA/OOHCA)
+        document.querySelectorAll('.prognosis-toggle-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var section = this.getAttribute('data-section');
+                document.querySelectorAll('.prognosis-toggle-btn').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+                $('prognosisPrompt').classList.add('hidden');
+                document.querySelectorAll('.prognosis-section').forEach(function(s) {
+                    s.classList.remove('active');
+                });
+                $(section + 'Section').classList.add('active');
+            });
+        });
+        
+        // OOHCA calculator setup
+        (function() {
+            // Populate minutes dropdown (0-60)
+            var minsSelect = $('oohcaMins');
+            for (var i = 0; i <= 60; i++) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                minsSelect.appendChild(opt);
+            }
+            
+            // Render OOHCA buttons
+            var rhythmBtns = $('oohcaRhythmButtons');
+            rhythmBtns.innerHTML = '<button class="calc-btn" data-value="shockable">VF/VT</button>' +
+                '<button class="calc-btn" data-value="nonshockable">PEA/Asystole</button>';
+            
+            var witBtns = $('oohcaWitnessedButtons');
+            witBtns.innerHTML = '<button class="calc-btn" data-value="witnessed">Yes</button>' +
+                '<button class="calc-btn" data-value="unwitnessed">No</button>';
+            
+            var bysBtns = $('oohcaBystanderButtons');
+            bysBtns.innerHTML = '<button class="calc-btn" data-value="bystander">Yes</button>' +
+                '<button class="calc-btn" data-value="noBystander">No</button>';
+            
+            // Event handlers
+            rhythmBtns.addEventListener('click', function(e) {
+                if (e.target.classList.contains('calc-btn')) {
+                    rhythmBtns.querySelectorAll('.calc-btn').forEach(function(b) { b.classList.remove('active'); });
+                    e.target.classList.add('active');
+                    oohcaRhythm = e.target.getAttribute('data-value');
+                    updateOOHCACalc();
+                }
+            });
+            
+            witBtns.addEventListener('click', function(e) {
+                if (e.target.classList.contains('calc-btn')) {
+                    witBtns.querySelectorAll('.calc-btn').forEach(function(b) { b.classList.remove('active'); });
+                    e.target.classList.add('active');
+                    oohcaWitnessed = e.target.getAttribute('data-value');
+                    updateOOHCACalc();
+                }
+            });
+            
+            bysBtns.addEventListener('click', function(e) {
+                if (e.target.classList.contains('calc-btn')) {
+                    bysBtns.querySelectorAll('.calc-btn').forEach(function(b) { b.classList.remove('active'); });
+                    e.target.classList.add('active');
+                    oohcaBystander = e.target.getAttribute('data-value');
+                    updateOOHCACalc();
+                }
+            });
+            
+            minsSelect.addEventListener('change', function() {
+                oohcaMins = parseInt(this.value, 10) || 0;
+                updateOOHCACalc();
+            });
+            
+            // Auto-sync checkbox
+            $('oohcaAutoSync').addEventListener('change', function() {
+                oohcaAutoSync = this.checked;
+                if (oohcaAutoSync) {
+                    oohcaMins = Math.floor(totalSeconds / 60);
+                    $('oohcaMins').value = oohcaMins;
+                    updateOOHCACalc();
+                }
+            });
+        })();
+        
+        function updateOOHCACalc() {
+            var placeholderEl = $('oohcaPlaceholder');
+            var outputEl = $('oohcaOutput');
+            var probabilityEl = $('oohcaProbability');
+            var outcomeLabelEl = $('oohcaOutcomeLabel');
+            
+            // Check if all inputs selected
+            if (oohcaRhythm === null || oohcaWitnessed === null || oohcaBystander === null) {
+                placeholderEl.style.display = 'block';
+                outputEl.classList.add('hidden');
+                return;
+            }
+            
+            // Hide placeholder, show output
+            placeholderEl.style.display = 'none';
+            outputEl.classList.remove('hidden');
+            
+            // Build key and get data
+            var key = oohcaRhythm + '_' + oohcaWitnessed + '_' + oohcaBystander;
+            var data = oohcaPrognosis[key];
+            
+            // Determine time point to use (round to nearest)
+            var timePoints = [5, 10, 15, 20, 30, 40];
+            var usedTimepoint;
+            var probability;
+            var beyondData = false;
+            
+            if (oohcaMins < 5) {
+                usedTimepoint = 5;
+                probability = data[5];
+            } else if (oohcaMins > 47) {
+                // Paper states: "The longest duration of professional CPR observed 
+                // in any subject with eventual mRS 0-3 was 47 minutes"
+                usedTimepoint = 47;
+                probability = 'No survivors';
+                beyondData = true;
+            } else if (oohcaMins > 40) {
+                // Between 41-47 mins: use 40 min data but flag as beyond main data range
+                usedTimepoint = 40;
+                probability = data[40];
+                beyondData = true;
+            } else {
+                // Find the nearest time point
+                var minDiff = Infinity;
+                for (var i = 0; i < timePoints.length; i++) {
+                    var diff = Math.abs(oohcaMins - timePoints[i]);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        usedTimepoint = timePoints[i];
+                    }
+                }
+                probability = data[usedTimepoint];
+            }
+            
+            // Display probability
+            probabilityEl.textContent = probability;
+            
+            // Determine color class based on probability
+            var colorClass = 'medium';
+            if (probability.includes('>30') || probability.includes('20-30')) {
+                colorClass = 'good';
+            } else if (probability.includes('<1') || probability.includes('<2') || probability.includes('1-2') || probability.includes('No survivors')) {
+                colorClass = 'bad';
+            }
+            probabilityEl.className = 'oohca-probability ' + colorClass;
+            
+            // Show outcome label with timepoint
+            if (oohcaMins > 47) {
+                outcomeLabelEl.textContent = 'No survivors with good neurological outcome were observed beyond 47 min of CPR in the ROC-PRIMED study';
+            } else if (beyondData) {
+                outcomeLabelEl.textContent = 'survival with good neurological outcome (mRS 0-3) — beyond 40 min, favorable outcomes were extremely rare (max observed: 47 min)';
+            } else {
+                outcomeLabelEl.textContent = 'survival with good neurological outcome (mRS 0-3) if CPR ongoing at ' + usedTimepoint + ' min';
+            }
+        }
+        
+        // E-CPR
+        // Populate age select options (0-100, default 40)
+        (function() {
+            var ageSelect = $('ecprAge');
+            for (var i = 0; i <= 100; i++) {
+                var opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                if (i === 40) opt.selected = true;
+                ageSelect.appendChild(opt);
+            }
+        })();
+        
+        $('ecprAge').addEventListener('change', updateECPR);
+        updateECPR(); // Initialize with default value
+        
+        document.querySelectorAll('.ecpr-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var field = btn.getAttribute('data-field');
+                var value = btn.getAttribute('data-value') === 'yes';
+                ecprData[field] = value;
+                btn.parentElement.querySelectorAll('.ecpr-btn').forEach(function(b) { b.classList.remove('yes', 'no'); });
+                btn.classList.add(value ? 'yes' : 'no');
+                updateECPR();
+            });
+        });
+        
+        function updateECPR() {
+            var age = parseInt($('ecprAge').value, 10) || 0;
+            var maxTime = 100 - age;
+            
+            // Update the time question label
+            if (maxTime > 0) {
+                $('ecprTimeLabel').textContent = 'Can decision to initiate ECMO be made within ' + maxTime + ' min of arrest?';
+            } else {
+                $('ecprTimeLabel').textContent = 'Can decision to initiate ECMO be made in time?';
+            }
+            $('ecprAgeWarning').textContent = age > 65 ? '⚠️ Age >65 favours exclusion' : '';
+            
+            // Count criteria states
+            var criteriaValues = [ecprData.withinTime, ecprData.witnessed, ecprData.shockable, ecprData.bystander, ecprData.noEndStage];
+            var answeredCount = criteriaValues.filter(function(c) { return c !== null; }).length;
+            var metCount = criteriaValues.filter(function(c) { return c === true; }).length;
+            var notMetCount = criteriaValues.filter(function(c) { return c === false; }).length;
+            
+            var survivalEl = $('ecprSurvival');
+            survivalEl.classList.remove('good', 'medium', 'bad', 'show', 'neutral');
+            
+            // Only show survival estimate when all 5 criteria are answered
+            if (answeredCount < 5) {
+                survivalEl.classList.add('neutral', 'show');
+                $('ecprSurvivalValue').textContent = 'Answer all criteria';
+            } else if (metCount === 5) {
+                survivalEl.classList.add('good', 'show');
+                $('ecprSurvivalValue').textContent = '~46%';
+            } else if (notMetCount === 1) {
+                survivalEl.classList.add('medium', 'show');
+                $('ecprSurvivalValue').textContent = '~12%';
+            } else if (notMetCount >= 2) {
+                survivalEl.classList.add('bad', 'show');
+                $('ecprSurvivalValue').textContent = 'No survivors';
+            }
+        }
+        
+        // Log
+        function renderLog() {
+            if (log.length === 0) {
+                $('logEntries').innerHTML = '<p class="log-empty">No events logged yet</p>';
+            } else {
+                $('logEntries').innerHTML = log.map(function(e) {
+                    return '<div class="log-entry"><span class="time">' + e.time + '</span><span class="sep"> — </span><span>' + e.event + '</span></div>';
+                }).join('');
+            }
+        }
+        
+        $('btnCopyLog').addEventListener('click', function() {
+            var text = log.map(function(e) { return e.time + ' - ' + e.event; }).join('\n');
+            navigator.clipboard.writeText(text).then(function() { alert('Log copied to clipboard'); });
+        });
+        
+        $('btnCopySummary').addEventListener('click', function() {
+            var text = $('logSummaryContent').textContent;
+            navigator.clipboard.writeText(text).then(function() { alert('Summary copied to clipboard'); });
+        });
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') requestWakeLock();
+        });
+        
+        // Service Worker for offline support
+        if ('serviceWorker' in navigator) {
+            var swCode = `
+                var CACHE_NAME = 'codeClock-v33';
+                self.addEventListener('install', function(e) {
+                    e.waitUntil(
+                        caches.open(CACHE_NAME).then(function(cache) {
+                            return cache.addAll([location.href]);
+                        })
+                    );
+                    self.skipWaiting();
+                });
+                self.addEventListener('fetch', function(e) {
+                    e.respondWith(
+                        caches.match(e.request).then(function(response) {
+                            return response || fetch(e.request).then(function(fetchResponse) {
+                                return caches.open(CACHE_NAME).then(function(cache) {
+                                    cache.put(e.request, fetchResponse.clone());
+                                    return fetchResponse;
+                                });
+                            });
+                        }).catch(function() {
+                            return caches.match(location.href);
+                        })
+                    );
+                });
+            `;
+            var blob = new Blob([swCode], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: location.pathname })
+                .catch(function() {});
+        }
+    })();
+    </script>
+</body>
+</html>
