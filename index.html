@@ -740,9 +740,25 @@
             color: #4ecdc4;
         }
         
-        .ht-page h4 {
-            margin-top: 24px;
+        .ht-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
             margin-bottom: 12px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .ht-section-header:first-of-type {
+            margin-top: 0;
+        }
+
+        .ht-section-header .title {
             font-size: 0.85rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -750,8 +766,30 @@
             color: #888;
         }
 
-        .ht-page h4:first-of-type {
-            margin-top: 0;
+        .ht-section-header .status {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .ht-section-header.complete {
+            background: rgba(68,255,68,0.1);
+            border: 1px solid #44ff44;
+        }
+
+        .ht-section-header.complete .title {
+            color: #44ff44;
+        }
+
+        .ht-section-header.complete .status {
+            color: #44ff44;
+        }
+
+        .ht-section-items {
+            display: block;
+        }
+
+        .ht-section-items.collapsed {
+            display: none;
         }
         
         .check-item {
@@ -4045,6 +4083,7 @@
         // Actions grouped by category
         var actionCategories = [
             {
+                id: 'immediate',
                 title: 'Immediate',
                 items: [
                     { id: 'airway', label: 'Airway confirmed with EtCO₂ and delivering 100% O₂' },
@@ -4053,6 +4092,7 @@
                 ]
             },
             {
+                id: 'reversible',
                 title: 'Reversible Causes',
                 items: [
                     { id: 'toxins', label: 'Check chart for toxins' },
@@ -4064,6 +4104,7 @@
                 ]
             },
             {
+                id: 'escalation',
                 title: 'Escalation & Team',
                 items: [
                     { id: 'artline', label: 'Consider art line', arrow: '→ dose adrenaline to dBP >35' },
@@ -4073,13 +4114,33 @@
             }
         ];
 
+        // Track collapsed state: Immediate expanded, others collapsed by default
+        var sectionCollapsed = { immediate: false, reversible: true, escalation: true };
+
         function renderHTs() {
             var actionsHTML = '';
             actionCategories.forEach(function(category) {
-                // Check if all items in category are checked
-                var allChecked = category.items.every(function(item) { return htChecked[item.id]; });
-                var headerClass = allChecked ? ' style="color: #44ff44;"' : '';
-                actionsHTML += '<h4' + headerClass + '>' + category.title + '</h4>';
+                // Check completion status
+                var checkedCount = category.items.filter(function(item) { return htChecked[item.id]; }).length;
+                var allChecked = checkedCount === category.items.length;
+
+                // Auto-collapse completed sections
+                if (allChecked) {
+                    sectionCollapsed[category.id] = true;
+                }
+
+                var isCollapsed = sectionCollapsed[category.id];
+                var headerClass = allChecked ? ' complete' : '';
+                var statusText = allChecked ? '✓ Complete' : (checkedCount + '/' + category.items.length);
+                var chevron = isCollapsed ? '▶' : '▼';
+
+                actionsHTML += '<div class="ht-section-header' + headerClass + '" data-section="' + category.id + '">';
+                actionsHTML += '<span class="title">' + chevron + ' ' + category.title + '</span>';
+                actionsHTML += '<span class="status">' + statusText + '</span>';
+                actionsHTML += '</div>';
+
+                var itemsClass = isCollapsed ? ' collapsed' : '';
+                actionsHTML += '<div class="ht-section-items' + itemsClass + '" data-section-items="' + category.id + '">';
 
                 // Sort: unchecked items first within each category
                 var sortedItems = category.items.slice().sort(function(a, b) {
@@ -4093,12 +4154,24 @@
                     var arrow = item.arrow ? '<span class="check-arrow">' + item.arrow + '</span>' : '';
                     actionsHTML += '<div class="check-item' + checked + '" data-id="' + item.id + '"><div class="check-box">' + (htChecked[item.id] ? '✓' : '') + '</div><div class="check-label">' + item.label + arrow + '</div></div>';
                 });
+
+                actionsHTML += '</div>';
             });
             $('actionsList').innerHTML = actionsHTML;
         }
-        
+
         // Event delegation for checklist
         $('actionsList').addEventListener('click', function(e) {
+            // Handle section header clicks (expand/collapse)
+            var header = e.target.closest('.ht-section-header');
+            if (header) {
+                var sectionId = header.getAttribute('data-section');
+                sectionCollapsed[sectionId] = !sectionCollapsed[sectionId];
+                renderHTs();
+                return;
+            }
+
+            // Handle item clicks
             var item = e.target.closest('.check-item');
             if (item) {
                 var id = item.getAttribute('data-id');
