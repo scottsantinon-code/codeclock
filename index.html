@@ -4176,15 +4176,21 @@
         var ecprWizardData = { age: null, withinTime: null, witnessed: null, shockable: null, bystander: null, noEndStage: null };
         var ecprCurrentStep = 1;
         
-        // Populate age select
+        // Populate age select with default of 50
         (function() {
             var ageSelect = $('ecprAgeWizard');
+            var defaultAge = 50;
             for (var i = 18; i <= 100; i++) {
                 var opt = document.createElement('option');
                 opt.value = i;
                 opt.textContent = i;
+                if (i === defaultAge) opt.selected = true;
                 ageSelect.appendChild(opt);
             }
+            // Initialize with default age
+            ecprWizardData.age = defaultAge;
+            $('ecprNext1').disabled = false;
+            $('ecprTimeQuestion').textContent = 'Can ECMO decision be made within ' + (100 - defaultAge) + ' min?';
         })();
         
         function ecprShowStep(step) {
@@ -4271,9 +4277,11 @@
         window.ecprBack = ecprBack;
         
         function ecprReset() {
-            ecprWizardData = { age: null, withinTime: null, witnessed: null, shockable: null, bystander: null, noEndStage: null };
-            $('ecprAgeWizard').value = '';
-            $('ecprNext1').disabled = true;
+            var defaultAge = 50;
+            ecprWizardData = { age: defaultAge, withinTime: null, witnessed: null, shockable: null, bystander: null, noEndStage: null };
+            $('ecprAgeWizard').value = defaultAge;
+            $('ecprNext1').disabled = false;
+            $('ecprTimeQuestion').textContent = 'Can ECMO decision be made within ' + (100 - defaultAge) + ' min?';
             $('ecprAgeWizardWarning').textContent = '';
             document.querySelectorAll('#ecprWizard .wizard-option').forEach(function(o) { o.classList.remove('selected'); });
             ecprShowStep(1);
