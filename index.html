@@ -743,8 +743,15 @@
         .ht-page h4 {
             margin-top: 24px;
             margin-bottom: 12px;
-            font-size: 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             color: #888;
+        }
+
+        .ht-page h4:first-of-type {
+            margin-top: 0;
         }
         
         .check-item {
@@ -4035,34 +4042,57 @@
             updateDisplay();
         });
         
-        // Hs & Ts
-        var actionItems = [
-            { id: 'airway', label: 'Airway confirmed with EtCO₂ and delivering 100% O₂' },
-            { id: 'fluid', label: 'Fluid bolus' },
-            { id: 'gas', label: 'Blood gas for pH, K⁺, BSL and Hb' },
-            { id: 'toxins', label: 'Check chart for toxins' },
-            { id: 'pneumo', label: 'Check if trachea midline or difficult to ventilate (?tension pneumothorax)', arrow: '→ Finger thoracostomy' },
-            { id: 'echo', label: 'Echo to check for tamponade' },
-            { id: 'haem', label: 'Consider haemorrhage', arrow: '→ reverse anticoag, activate MTP' },
-            { id: 'ami', label: 'Consider AMI' },
-            { id: 'pe', label: 'Consider PE', arrow: '→ thrombolyse' },
-            { id: 'artline', label: 'Consider art line', arrow: '→ dose adrenaline to dBP >35' },
-            { id: 'mechcpr', label: 'Consider mechanical CPR' },
-            { id: 'family', label: 'Home team and family called' }
+        // Actions grouped by category
+        var actionCategories = [
+            {
+                title: 'Immediate',
+                items: [
+                    { id: 'airway', label: 'Airway confirmed with EtCO₂ and delivering 100% O₂' },
+                    { id: 'fluid', label: 'Fluid bolus' },
+                    { id: 'gas', label: 'Blood gas for pH, K⁺, BSL and Hb' }
+                ]
+            },
+            {
+                title: 'Reversible Causes',
+                items: [
+                    { id: 'toxins', label: 'Check chart for toxins' },
+                    { id: 'pneumo', label: 'Check trachea midline (?tension pneumothorax)', arrow: '→ Finger thoracostomy' },
+                    { id: 'echo', label: 'Echo for tamponade' },
+                    { id: 'haem', label: 'Consider haemorrhage', arrow: '→ reverse anticoag, activate MTP' },
+                    { id: 'ami', label: 'Consider AMI' },
+                    { id: 'pe', label: 'Consider PE', arrow: '→ thrombolyse' }
+                ]
+            },
+            {
+                title: 'Escalation & Team',
+                items: [
+                    { id: 'artline', label: 'Consider art line', arrow: '→ dose adrenaline to dBP >35' },
+                    { id: 'mechcpr', label: 'Consider mechanical CPR' },
+                    { id: 'family', label: 'Home team and family called' }
+                ]
+            }
         ];
-        
+
         function renderHTs() {
             var actionsHTML = '';
-            // Sort: unchecked items first, checked items at bottom
-            var sortedItems = actionItems.slice().sort(function(a, b) {
-                var aChecked = htChecked[a.id] ? 1 : 0;
-                var bChecked = htChecked[b.id] ? 1 : 0;
-                return aChecked - bChecked;
-            });
-            sortedItems.forEach(function(item) {
-                var checked = htChecked[item.id] ? ' checked' : '';
-                var arrow = item.arrow ? '<span class="check-arrow">' + item.arrow + '</span>' : '';
-                actionsHTML += '<div class="check-item' + checked + '" data-id="' + item.id + '"><div class="check-box">' + (htChecked[item.id] ? '✓' : '') + '</div><div class="check-label">' + item.label + arrow + '</div></div>';
+            actionCategories.forEach(function(category) {
+                // Check if all items in category are checked
+                var allChecked = category.items.every(function(item) { return htChecked[item.id]; });
+                var headerClass = allChecked ? ' style="color: #44ff44;"' : '';
+                actionsHTML += '<h4' + headerClass + '>' + category.title + '</h4>';
+
+                // Sort: unchecked items first within each category
+                var sortedItems = category.items.slice().sort(function(a, b) {
+                    var aChecked = htChecked[a.id] ? 1 : 0;
+                    var bChecked = htChecked[b.id] ? 1 : 0;
+                    return aChecked - bChecked;
+                });
+
+                sortedItems.forEach(function(item) {
+                    var checked = htChecked[item.id] ? ' checked' : '';
+                    var arrow = item.arrow ? '<span class="check-arrow">' + item.arrow + '</span>' : '';
+                    actionsHTML += '<div class="check-item' + checked + '" data-id="' + item.id + '"><div class="check-box">' + (htChecked[item.id] ? '✓' : '') + '</div><div class="check-label">' + item.label + arrow + '</div></div>';
+                });
             });
             $('actionsList').innerHTML = actionsHTML;
         }
