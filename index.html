@@ -12,8 +12,8 @@
             --green: #44ff44;
             --red: #ff4444;
             --red-light: #ff6b6b;
-            --orange: #ffa500;
-            --teal: #4ecdc4;
+            --orange: #F59E0B;
+            --teal: #06B6D4;
             --bg-dark: #1a1a2e;
             --bg-card: #2a2a4e;
             --bg-secondary: #2a2a4e;
@@ -23,7 +23,7 @@
             --text-secondary: #eeeeee;
             --text-muted: #888888;
             --text-dim: #666666;
-            --border-color: #444444;
+            --border-color: #444;
             --separator: rgba(255,255,255,0.1);
             --radius-sm: 8px;
             --radius-md: 12px;
@@ -148,8 +148,11 @@
         
         .header-title {
             font-size: 1.32rem;
-            font-weight: bold;
-            color: #4ecdc4;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             transition: font-size 0.2s ease;
         }
         
@@ -199,7 +202,7 @@
         
         .tab-btn.active {
             background: var(--bg-card);
-            border-bottom-color: var(--green);
+            border-bottom-color: #8B5CF6;
             color: #fff;
         }
         
@@ -589,8 +592,8 @@
             margin-top: 8px;
             font-size: 0.9rem;
             background: transparent;
-            color: #4ecdc4;
-            border: 1px solid #4ecdc4;
+            color: #06B6D4;
+            border: 1px solid #06B6D4;
             border-radius: 8px;
             cursor: pointer;
         }
@@ -624,7 +627,7 @@
         .rosc-history-item .duration {
             font-size: 1.2rem;
             font-weight: bold;
-            color: #4ecdc4;
+            color: #06B6D4;
         }
         
         .rosc-history-item .times {
@@ -707,8 +710,8 @@
         }
         
         .btn-green { background: #44ff44; color: #000; font-weight: bold; }
-        .btn-teal { background: #4ecdc4; color: #000; font-weight: bold; }
-        .btn-orange { background: #ffa500; color: #000; }
+        .btn-teal { background: #06B6D4; color: #000; font-weight: bold; }
+        .btn-orange { background: #F59E0B; color: #000; }
         .btn-gray { background: #666; color: #fff; }
         
         .amio-alert {
@@ -737,7 +740,7 @@
         .ht-page h3 {
             margin-bottom: 12px;
             font-size: 1.1rem;
-            color: #4ecdc4;
+            color: #06B6D4;
         }
         
         .ht-section-header {
@@ -836,7 +839,7 @@
         }
         
         .check-arrow {
-            color: #ffa500;
+            color: #F59E0B;
             margin-left: 8px;
             font-size: 0.9rem;
         }
@@ -868,7 +871,7 @@
         }
         
         .drug-name {
-            color: #4ecdc4;
+            color: #06B6D4;
             font-weight: 500;
         }
         
@@ -1083,7 +1086,7 @@
         }
         
         .prognosis-box .prog-value.good { color: #44ff44; }
-        .prognosis-box .prog-value.medium { color: #ffa500; }
+        .prognosis-box .prog-value.medium { color: #F59E0B; }
         .prognosis-box .prog-value.bad { color: #ff6b6b; }
         
         .stop-footer {
@@ -1124,8 +1127,8 @@
         
         .prognosis-toggle-btn.active {
             background: rgba(78, 205, 196, 0.15);
-            border-color: #4ecdc4;
-            color: #4ecdc4;
+            border-color: #06B6D4;
+            color: #06B6D4;
         }
         
         .prognosis-prompt {
@@ -1184,7 +1187,7 @@
         }
         
         .oohca-probability.medium {
-            color: #ffa500;
+            color: #F59E0B;
         }
         
         .oohca-probability.bad {
@@ -1435,7 +1438,7 @@
         }
         
         .ecpr-survival.good { background: rgba(68,255,68,0.1); border: 2px solid #44ff44; }
-        .ecpr-survival.medium { background: rgba(255,165,0,0.1); border: 2px solid #ffa500; }
+        .ecpr-survival.medium { background: rgba(255,165,0,0.1); border: 2px solid #F59E0B; }
         .ecpr-survival.bad { background: rgba(255,68,68,0.1); border: 2px solid #ff6b6b; }
         .ecpr-survival.neutral { background: rgba(255,255,255,0.05); border: 2px solid #666; }
         
@@ -1451,7 +1454,7 @@
         }
         
         .ecpr-survival.good .value { color: #44ff44; }
-        .ecpr-survival.medium .value { color: #ffa500; }
+        .ecpr-survival.medium .value { color: #F59E0B; }
         .ecpr-survival.bad .value { color: #ff6b6b; }
         .ecpr-survival.neutral .value { color: #888; font-size: 1.15rem; }
         
@@ -1510,11 +1513,11 @@
         }
         
         .wizard-progress-dot.complete {
-            background: #4ecdc4;
+            background: #06B6D4;
         }
         
         .wizard-progress-dot.current {
-            background: #4ecdc4;
+            background: #06B6D4;
         }
         
         .wizard-step {
@@ -1565,8 +1568,8 @@
         
         .wizard-option.selected {
             background: rgba(78, 205, 196, 0.15);
-            border-color: #4ecdc4;
-            color: #4ecdc4;
+            border-color: #06B6D4;
+            color: #06B6D4;
         }
         
         .wizard-option-hint {
@@ -1576,7 +1579,7 @@
         }
         
         .wizard-option.selected .wizard-option-hint {
-            color: #4ecdc4;
+            color: #06B6D4;
             opacity: 0.8;
         }
         
@@ -1609,7 +1612,7 @@
         .wizard-next {
             margin-top: auto;
             padding: 18px;
-            background: #4ecdc4;
+            background: #06B6D4;
             color: #1a1a2e;
             border: none;
             border-radius: 12px;
@@ -1646,7 +1649,7 @@
         }
         
         .wizard-result-value.good { color: #44ff44; }
-        .wizard-result-value.medium { color: #ffa500; }
+        .wizard-result-value.medium { color: #F59E0B; }
         .wizard-result-value.bad { color: #ff6b6b; }
         
         .wizard-result-label {
@@ -1673,8 +1676,8 @@
             margin-top: 24px;
             padding: 14px 24px;
             background: transparent;
-            color: #4ecdc4;
-            border: 2px solid #4ecdc4;
+            color: #06B6D4;
+            border: 2px solid #06B6D4;
             border-radius: 10px;
             font-size: 1rem;
             cursor: pointer;
@@ -1887,8 +1890,11 @@
         
         .landing-title {
             font-size: 2.5rem;
-            font-weight: bold;
-            color: #fff;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 60px;
             text-align: center;
         }
@@ -2604,7 +2610,7 @@
                 <p><strong>Timing protocols:</strong> Australian and New Zealand Committee on Resuscitation (ANZCOR) Guidelines</p>
                 <p><strong>In-hospital cardiac arrest prognosis:</strong> Okubo et al., BMJ 2024 – survival probability data extracted from published Kaplan-Meier curves</p>
                 <p><strong>Out-of-hospital cardiac arrest prognosis:</strong> Reynolds et al., Circulation 2016 – probability ranges derived from published survival curves</p>
-                <p><strong>E-CPR criteria:</strong> Based on <a href="https://ecmo.icu/ecpr-inclusion-criteria/" target="_blank" rel="noopener" style="color: #4ecdc4;">The Alfred Hospital ECMO Retrieval Service guidelines</a></p>
+                <p><strong>E-CPR criteria:</strong> Based on <a href="https://ecmo.icu/ecpr-inclusion-criteria/" target="_blank" rel="noopener" style="color: #06B6D4;">The Alfred Hospital ECMO Retrieval Service guidelines</a></p>
                 <p><strong>Drug dosages:</strong> Standard adult doses from established resuscitation guidelines</p>
                 <p>Prognostic calculations provide <strong>approximate probability ranges</strong> based on population-level data and may not reflect individual patient outcomes. These are provided as decision-support information only and should not be the sole basis for clinical decisions.</p>
                 
@@ -2978,7 +2984,7 @@
         // Color constants (matching CSS variables)
         var COLOR_GREEN = '#44ff44';
         var COLOR_RED = '#ff4444';
-        var COLOR_ORANGE = '#ffa500';
+        var COLOR_ORANGE = '#F59E0B';
         
         function getTimerColor(remaining) {
             if (remaining <= 0) return COLOR_RED;
