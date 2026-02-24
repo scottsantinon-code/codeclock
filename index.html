@@ -297,14 +297,33 @@
             background: var(--bg-tertiary);
         }
         
+        /* P4: Tab content transitions */
         .tab-content {
             flex: 1;
             overflow: auto;
             display: none;
+            opacity: 0;
         }
-        
+
         .tab-content.active {
             display: block;
+            opacity: 1;
+            animation: tabFadeIn 0.15s ease-out;
+        }
+
+        @keyframes tabFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tab-content.active {
+                animation: none;
+            }
         }
         
         .timer-page {
@@ -483,15 +502,34 @@
             margin-top: 4px;
         }
         
+        /* P4: Timer grid reveal animation */
         .timer-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             margin-top: 20px;
+            animation: timerGridReveal 0.3s ease-out;
         }
-        
+
+        @keyframes timerGridReveal {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .timer-grid.hidden {
             display: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .timer-grid {
+                animation: none;
+            }
         }
         
         .small-timer {
@@ -555,14 +593,33 @@
             margin-top: 4px;
         }
         
+        /* P4: Bottom buttons reveal animation */
         .bottom-buttons-row {
             display: flex;
             gap: 12px;
             margin-top: 64px;
+            animation: bottomButtonsReveal 0.3s ease-out 0.1s both;
         }
-        
+
+        @keyframes bottomButtonsReveal {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .bottom-buttons-row.hidden {
             display: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bottom-buttons-row {
+                animation: none;
+            }
         }
         
         .btn-rosc {
@@ -658,6 +715,7 @@
             margin-top: 4px;
         }
         
+        /* P4: Modal transitions */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -670,12 +728,23 @@
             justify-content: center;
             z-index: 1000;
             padding: 20px;
+            opacity: 1;
+            animation: modalOverlayIn 0.2s ease-out;
         }
-        
+
+        @keyframes modalOverlayIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
         .modal-overlay.hidden {
             display: none;
         }
-        
+
         .modal {
             background: #2a2a4e;
             border-radius: 16px;
@@ -683,6 +752,26 @@
             max-width: 400px;
             width: 100%;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            animation: modalSlideIn 0.25s ease-out;
+            transform-origin: center bottom;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .modal-overlay,
+            .modal {
+                animation: none;
+            }
         }
         
         .modal h2 {
@@ -1496,14 +1585,15 @@
             min-height: 70vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
-        
+
         .wizard-progress {
             display: flex;
             gap: 6px;
             margin-bottom: 24px;
         }
-        
+
         .wizard-progress-dot {
             flex: 1;
             height: 4px;
@@ -1511,23 +1601,138 @@
             border-radius: 2px;
             transition: background 0.3s ease;
         }
-        
+
         .wizard-progress-dot.complete {
             background: #06B6D4;
         }
-        
+
         .wizard-progress-dot.current {
             background: #06B6D4;
         }
-        
+
+        /* H6: Selection summary bar */
+        .wizard-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            min-height: 36px;
+        }
+
+        .wizard-summary:empty {
+            display: none;
+        }
+
+        .wizard-summary-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #06B6D4;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .wizard-summary-pill:hover {
+            background: rgba(6, 182, 212, 0.25);
+            border-color: #06B6D4;
+        }
+
+        .wizard-summary-pill:active {
+            transform: scale(0.95);
+        }
+
+        .wizard-summary-pill .pill-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+        }
+
+        .wizard-summary-pill .pill-value {
+            font-weight: 600;
+        }
+
+        /* P4: Wizard step transitions */
+        .wizard-steps-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
         .wizard-step {
             display: none;
             flex: 1;
             flex-direction: column;
+            opacity: 0;
+            transform: translateX(20px);
         }
-        
+
         .wizard-step.active {
             display: flex;
+            opacity: 1;
+            transform: translateX(0);
+            animation: wizardStepIn 0.25s ease-out;
+        }
+
+        .wizard-step.exiting {
+            animation: wizardStepOut 0.15s ease-in forwards;
+        }
+
+        .wizard-step.entering-back {
+            animation: wizardStepInReverse 0.25s ease-out;
+        }
+
+        @keyframes wizardStepIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes wizardStepOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+        }
+
+        @keyframes wizardStepInReverse {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Respect reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            .wizard-step,
+            .wizard-step.active,
+            .wizard-step.exiting,
+            .wizard-step.entering-back {
+                animation: none;
+                transition: none;
+                transform: none;
+            }
+
+            .wizard-step.active {
+                opacity: 1;
+            }
         }
         
         .wizard-question {
@@ -2291,7 +2496,10 @@
                     <div class="wizard-progress-dot"></div>
                     <div class="wizard-progress-dot"></div>
                 </div>
-                
+
+                <!-- H6: Selection summary bar -->
+                <div class="wizard-summary" id="progSummary"></div>
+
                 <!-- Step 1: Arrest Type -->
                 <div class="wizard-step active" data-step="1">
                     <div class="wizard-question">Arrest location?</div>
@@ -2460,7 +2668,10 @@
                     <div class="wizard-progress-dot"></div>
                     <div class="wizard-progress-dot"></div>
                 </div>
-                
+
+                <!-- H6: Selection summary bar -->
+                <div class="wizard-summary" id="ecprSummary"></div>
+
                 <!-- Step 1: Age -->
                 <div class="wizard-step active" data-step="1">
                     <div class="wizard-question">Patient age?</div>
@@ -4272,7 +4483,56 @@
         // E-CPR Wizard
         var ecprWizardData = { age: null, withinTime: null, witnessed: null, shockable: null, bystander: null, noEndStage: null };
         var ecprCurrentStep = 1;
-        
+        var ecprPreviousStep = 1;
+
+        // H6: ECPR summary labels
+        var ecprSummaryLabels = {
+            age: { label: 'Age', format: function(v) { return v + 'y'; } },
+            withinTime: { label: 'Time', format: function(v) { return v ? 'Within limit' : 'Exceeded'; }, step: 2 },
+            witnessed: { label: 'Witnessed', format: function(v) { return v ? 'Yes' : 'No'; }, step: 3 },
+            shockable: { label: 'Rhythm', format: function(v) { return v ? 'Shockable' : 'Non-shock'; }, step: 4 },
+            bystander: { label: 'Bystander', format: function(v) { return v ? 'Yes' : 'No'; }, step: 5 },
+            noEndStage: { label: 'End-stage', format: function(v) { return v ? 'No' : 'Yes'; }, step: 6 }
+        };
+
+        // H6: Render ECPR summary bar
+        function renderEcprSummary() {
+            var summaryEl = $('ecprSummary');
+            var pills = [];
+
+            if (ecprWizardData.age !== null) {
+                pills.push({ key: 'age', step: 1, label: 'Age', value: ecprWizardData.age + 'y' });
+            }
+
+            ['withinTime', 'witnessed', 'shockable', 'bystander', 'noEndStage'].forEach(function(key) {
+                if (ecprWizardData[key] !== null) {
+                    var config = ecprSummaryLabels[key];
+                    pills.push({
+                        key: key,
+                        step: config.step,
+                        label: config.label,
+                        value: config.format(ecprWizardData[key])
+                    });
+                }
+            });
+
+            summaryEl.innerHTML = pills.map(function(pill) {
+                return '<div class="wizard-summary-pill" data-goto-step="' + pill.step + '">' +
+                    '<span class="pill-label">' + pill.label + '</span>' +
+                    '<span class="pill-value">' + pill.value + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        // H6: Summary pill click handler
+        $('ecprSummary').addEventListener('click', function(e) {
+            var pill = e.target.closest('.wizard-summary-pill');
+            if (pill) {
+                var step = parseInt(pill.getAttribute('data-goto-step'), 10);
+                ecprShowStep(step, 'back');
+            }
+        });
+
         // Populate age select with default of 50
         (function() {
             var ageSelect = $('ecprAgeWizard');
@@ -4289,14 +4549,27 @@
             $('ecprNext1').disabled = false;
             $('ecprTimeQuestion').textContent = 'Can ECMO decision be made within ' + (100 - defaultAge) + ' min?';
         })();
-        
-        function ecprShowStep(step) {
+
+        // P4: Enhanced step transition with direction
+        function ecprShowStep(step, direction) {
+            direction = direction || 'forward';
+            var prevStepNum = ecprCurrentStep;
             ecprCurrentStep = step;
-            document.querySelectorAll('#ecprWizard .wizard-step').forEach(function(s) {
-                s.classList.remove('active');
+
+            var steps = document.querySelectorAll('#ecprWizard .wizard-step');
+            var targetStep = document.querySelector('#ecprWizard .wizard-step[data-step="' + step + '"]');
+
+            steps.forEach(function(s) {
+                s.classList.remove('active', 'entering-back');
             });
-            document.querySelector('#ecprWizard .wizard-step[data-step="' + step + '"]').classList.add('active');
-            
+
+            if (targetStep) {
+                if (direction === 'back') {
+                    targetStep.classList.add('entering-back');
+                }
+                targetStep.classList.add('active');
+            }
+
             // Update progress dots
             var dots = document.querySelectorAll('#ecprProgress .wizard-progress-dot');
             var stepNum = typeof step === 'number' ? step : 7;
@@ -4305,8 +4578,11 @@
                 if (i < stepNum - 1) dot.classList.add('complete');
                 if (i === stepNum - 1) dot.classList.add('current');
             });
+
+            // H6: Update summary
+            renderEcprSummary();
         }
-        
+
         $('ecprAgeWizard').addEventListener('change', function() {
             var age = parseInt(this.value, 10);
             ecprWizardData.age = age;
@@ -4314,32 +4590,33 @@
             var maxTime = 100 - age;
             $('ecprTimeQuestion').textContent = 'Can ECMO decision be made within ' + maxTime + ' min?';
             $('ecprAgeWizardWarning').textContent = age > 65 ? '⚠️ Age >65 favours exclusion' : '';
+            renderEcprSummary();
         });
-        
+
         $('ecprNext1').addEventListener('click', function() {
-            ecprShowStep(2);
+            ecprShowStep(2, 'forward');
         });
-        
+
         // ECPR wizard option clicks
         document.querySelectorAll('#ecprWizard .wizard-option[data-field]').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var field = btn.getAttribute('data-field');
                 var value = btn.getAttribute('data-value') === 'yes';
                 ecprWizardData[field] = value;
-                
+
                 // Move to next step
                 var currentStep = btn.closest('.wizard-step').getAttribute('data-step');
                 var nextStep = parseInt(currentStep, 10) + 1;
                 if (nextStep <= 6) {
-                    ecprShowStep(nextStep);
+                    ecprShowStep(nextStep, 'forward');
                 } else {
                     // Calculate result
                     ecprCalculateResult();
-                    ecprShowStep(7);
+                    ecprShowStep(7, 'forward');
                 }
             });
         });
-        
+
         function ecprCalculateResult() {
             var metCount = 0;
             var notMetCount = 0;
@@ -4347,11 +4624,11 @@
                 if (ecprWizardData[key] === true) metCount++;
                 if (ecprWizardData[key] === false) notMetCount++;
             });
-            
+
             var resultEl = $('ecprWizardResult');
             var criteriaEl = $('ecprWizardCriteria');
             resultEl.classList.remove('good', 'medium', 'bad');
-            
+
             if (metCount === 5) {
                 resultEl.textContent = '~46%';
                 resultEl.classList.add('good');
@@ -4366,13 +4643,13 @@
                 criteriaEl.textContent = notMetCount + ' criteria not met';
             }
         }
-        
+
         function ecprBack(fromStep) {
             var prevStep = fromStep === 7 ? 6 : (typeof fromStep === 'number' ? fromStep - 1 : 1);
-            ecprShowStep(prevStep);
+            ecprShowStep(prevStep, 'back');
         }
         window.ecprBack = ecprBack;
-        
+
         function ecprReset() {
             var defaultAge = 50;
             ecprWizardData = { age: defaultAge, withinTime: null, witnessed: null, shockable: null, bystander: null, noEndStage: null };
@@ -4381,13 +4658,96 @@
             $('ecprTimeQuestion').textContent = 'Can ECMO decision be made within ' + (100 - defaultAge) + ' min?';
             $('ecprAgeWizardWarning').textContent = '';
             document.querySelectorAll('#ecprWizard .wizard-option').forEach(function(o) { o.classList.remove('selected'); });
-            ecprShowStep(1);
+            ecprShowStep(1, 'back');
         }
         window.ecprReset = ecprReset;
         
         // Prognosis Wizard
         var progWizardData = { type: null, age: null, witnessed: null, rhythm: null, duration: 1, oohcaRhythm: null, oohcaWitnessed: null, oohcaBystander: null, oohcaDuration: 5 };
-        
+        var progCurrentStep = '1';
+
+        // H6: Prognosis summary value formatters
+        var progSummaryFormatters = {
+            type: function(v) { return v === 'ihca' ? 'IHCA' : 'OOHCA'; },
+            age: function(v) {
+                if (v === '<60') return '<60y';
+                if (v === '60-79') return '60-79y';
+                if (v === '>=80') return '≥80y';
+                return v;
+            },
+            witnessed: function(v) { return v === 'witnessed' ? 'Witnessed' : 'Unwitnessed'; },
+            rhythm: function(v) { return v === 'shockable' ? 'Shockable' : 'Non-shock'; },
+            oohcaRhythm: function(v) { return v === 'shockable' ? 'Shockable' : 'Non-shock'; },
+            oohcaWitnessed: function(v) { return v === 'witnessed' ? 'Witnessed' : 'Unwitnessed'; },
+            oohcaBystander: function(v) { return v === 'bystander' ? 'Bystander CPR' : 'No bystander'; }
+        };
+
+        // H6: Map fields to their step for navigation
+        var progFieldToStep = {
+            type: '1',
+            age: 'ihca-2',
+            witnessed: 'ihca-3',
+            rhythm: 'ihca-4',
+            oohcaRhythm: 'oohca-2',
+            oohcaWitnessed: 'oohca-3',
+            oohcaBystander: 'oohca-4'
+        };
+
+        // H6: Render prognosis summary bar
+        function renderProgSummary() {
+            var summaryEl = $('progSummary');
+            var pills = [];
+
+            // Always show type first if set
+            if (progWizardData.type) {
+                pills.push({
+                    step: '1',
+                    label: 'Type',
+                    value: progSummaryFormatters.type(progWizardData.type)
+                });
+
+                if (progWizardData.type === 'ihca') {
+                    // IHCA fields
+                    if (progWizardData.age) {
+                        pills.push({ step: 'ihca-2', label: 'Age', value: progSummaryFormatters.age(progWizardData.age) });
+                    }
+                    if (progWizardData.witnessed) {
+                        pills.push({ step: 'ihca-3', label: 'Witness', value: progSummaryFormatters.witnessed(progWizardData.witnessed) });
+                    }
+                    if (progWizardData.rhythm) {
+                        pills.push({ step: 'ihca-4', label: 'Rhythm', value: progSummaryFormatters.rhythm(progWizardData.rhythm) });
+                    }
+                } else {
+                    // OOHCA fields
+                    if (progWizardData.oohcaRhythm) {
+                        pills.push({ step: 'oohca-2', label: 'Rhythm', value: progSummaryFormatters.oohcaRhythm(progWizardData.oohcaRhythm) });
+                    }
+                    if (progWizardData.oohcaWitnessed) {
+                        pills.push({ step: 'oohca-3', label: 'Witness', value: progSummaryFormatters.oohcaWitnessed(progWizardData.oohcaWitnessed) });
+                    }
+                    if (progWizardData.oohcaBystander) {
+                        pills.push({ step: 'oohca-4', label: 'Bystander', value: progSummaryFormatters.oohcaBystander(progWizardData.oohcaBystander) });
+                    }
+                }
+            }
+
+            summaryEl.innerHTML = pills.map(function(pill) {
+                return '<div class="wizard-summary-pill" data-goto-step="' + pill.step + '">' +
+                    '<span class="pill-label">' + pill.label + '</span>' +
+                    '<span class="pill-value">' + pill.value + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        // H6: Summary pill click handler
+        $('progSummary').addEventListener('click', function(e) {
+            var pill = e.target.closest('.wizard-summary-pill');
+            if (pill) {
+                var step = pill.getAttribute('data-goto-step');
+                progShowStep(step, 'back');
+            }
+        });
+
         // Populate duration selects
         (function() {
             var ihcaSelect = $('ihcaMinsWizard');
@@ -4397,7 +4757,7 @@
                 opt.textContent = i;
                 ihcaSelect.appendChild(opt);
             }
-            
+
             var oohcaSelect = $('oohcaMinsWizard');
             [5, 10, 15, 20, 30, 40, 47].forEach(function(m) {
                 var opt = document.createElement('option');
@@ -4406,53 +4766,68 @@
                 oohcaSelect.appendChild(opt);
             });
         })();
-        
-        function progShowStep(step) {
-            document.querySelectorAll('#progWizard .wizard-step').forEach(function(s) {
-                s.classList.remove('active');
-            });
+
+        // P4: Enhanced step transition with direction
+        function progShowStep(step, direction) {
+            direction = direction || 'forward';
+            progCurrentStep = step;
+
+            var steps = document.querySelectorAll('#progWizard .wizard-step');
             var targetStep = document.querySelector('#progWizard .wizard-step[data-step="' + step + '"]');
-            if (targetStep) targetStep.classList.add('active');
-            
+
+            steps.forEach(function(s) {
+                s.classList.remove('active', 'entering-back');
+            });
+
+            if (targetStep) {
+                if (direction === 'back') {
+                    targetStep.classList.add('entering-back');
+                }
+                targetStep.classList.add('active');
+            }
+
             // Update progress
             var dots = document.querySelectorAll('#progProgress .wizard-progress-dot');
             var stepNum = 1;
-            if (step === 1) stepNum = 1;
-            else if (step.indexOf('-2') > -1) stepNum = 2;
-            else if (step.indexOf('-3') > -1) stepNum = 3;
-            else if (step.indexOf('-4') > -1) stepNum = 4;
-            else if (step.indexOf('-5') > -1) stepNum = 5;
-            else if (step.indexOf('-result') > -1) stepNum = 5;
-            
+            if (step === 1 || step === '1') stepNum = 1;
+            else if (String(step).indexOf('-2') > -1) stepNum = 2;
+            else if (String(step).indexOf('-3') > -1) stepNum = 3;
+            else if (String(step).indexOf('-4') > -1) stepNum = 4;
+            else if (String(step).indexOf('-5') > -1) stepNum = 5;
+            else if (String(step).indexOf('-result') > -1) stepNum = 5;
+
             dots.forEach(function(dot, i) {
                 dot.classList.remove('complete', 'current');
                 if (i < stepNum - 1) dot.classList.add('complete');
                 if (i === stepNum - 1) dot.classList.add('current');
             });
+
+            // H6: Update summary
+            renderProgSummary();
         }
-        
+
         // Type selection
         document.querySelectorAll('#progWizard .wizard-option[data-type]').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var type = btn.getAttribute('data-type');
                 progWizardData.type = type;
-                progShowStep(type + '-2');
+                progShowStep(type + '-2', 'forward');
             });
         });
-        
+
         // IHCA/OOHCA option clicks
         document.querySelectorAll('#progWizard .wizard-option[data-field]').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var field = btn.getAttribute('data-field');
                 var value = btn.getAttribute('data-value');
                 progWizardData[field] = value;
-                
+
                 var currentStep = btn.closest('.wizard-step').getAttribute('data-step');
                 var parts = currentStep.split('-');
                 var type = parts[0];
                 var stepNum = parseInt(parts[1], 10);
                 var nextStep = type + '-' + (stepNum + 1);
-                progShowStep(nextStep);
+                progShowStep(nextStep, 'forward');
             });
         });
         
@@ -4479,7 +4854,7 @@
         $('ihcaShowResult').addEventListener('click', function() {
             progWizardData.duration = parseInt($('ihcaMinsWizard').value, 10);
             calculateIHCAResult();
-            progShowStep('ihca-result');
+            progShowStep('ihca-result', 'forward');
         });
         
         function calculateIHCAResult() {
@@ -4527,41 +4902,41 @@
         $('oohcaShowResult').addEventListener('click', function() {
             progWizardData.oohcaDuration = parseInt($('oohcaMinsWizard').value, 10);
             calculateOOHCAResult();
-            progShowStep('oohca-result');
+            progShowStep('oohca-result', 'forward');
         });
-        
+
         function calculateOOHCAResult() {
             var phenKey = progWizardData.oohcaRhythm + '_' + progWizardData.oohcaWitnessed + '_' + progWizardData.oohcaBystander;
             var mins = progWizardData.oohcaDuration;
-            
+
             var resultEl = $('oohcaResultWizard');
             var noteEl = $('oohcaResultNote');
             resultEl.classList.remove('good', 'medium', 'bad');
-            
+
             if (mins > 47) {
                 resultEl.textContent = 'No survivors';
                 resultEl.classList.add('bad');
                 noteEl.textContent = 'Beyond 47 min of CPR in ROC-PRIMED study';
                 return;
             }
-            
+
             var data = oohcaPrognosis[phenKey];
             if (!data) {
                 resultEl.textContent = '—';
                 noteEl.textContent = '';
                 return;
             }
-            
+
             // Find closest timepoint
             var timepoints = [5, 10, 15, 20, 30, 40];
             var closest = timepoints.reduce(function(prev, curr) {
                 return Math.abs(curr - mins) < Math.abs(prev - mins) ? curr : prev;
             });
-            
+
             var prob = data[closest];
             resultEl.textContent = prob;
             noteEl.textContent = 'If CPR ongoing at ' + closest + ' min';
-            
+
             if (prob.includes('>30') || prob.includes('20-30')) {
                 resultEl.classList.add('good');
             } else if (prob.includes('<1') || prob.includes('<2') || prob.includes('1-2')) {
@@ -4570,23 +4945,23 @@
                 resultEl.classList.add('medium');
             }
         }
-        
+
         function progBack(fromStep) {
             if (fromStep === 'ihca-2' || fromStep === 'oohca-2') {
-                progShowStep(1);
+                progShowStep(1, 'back');
             } else if (fromStep === 'ihca-result') {
-                progShowStep('ihca-5');
+                progShowStep('ihca-5', 'back');
             } else if (fromStep === 'oohca-result') {
-                progShowStep('oohca-5');
+                progShowStep('oohca-5', 'back');
             } else {
                 var parts = fromStep.split('-');
                 var type = parts[0];
                 var stepNum = parseInt(parts[1], 10);
-                progShowStep(type + '-' + (stepNum - 1));
+                progShowStep(type + '-' + (stepNum - 1), 'back');
             }
         }
         window.progBack = progBack;
-        
+
         function progReset() {
             progWizardData = { type: null, age: null, witnessed: null, rhythm: null, duration: 1, oohcaRhythm: null, oohcaWitnessed: null, oohcaBystander: null, oohcaDuration: 5 };
             $('ihcaMinsWizard').value = '1';
@@ -4594,7 +4969,8 @@
             $('ihcaAutoSyncWizard').checked = false;
             $('oohcaAutoSyncWizard').checked = false;
             document.querySelectorAll('#progWizard .wizard-option').forEach(function(o) { o.classList.remove('selected'); });
-            progShowStep(1);
+            progShowStep(1, 'back');
+            renderProgSummary();
         }
         window.progReset = progReset;
         
@@ -4626,7 +5002,7 @@
         // Service Worker for offline support
         if ('serviceWorker' in navigator) {
             var swCode = `
-                var CACHE_NAME = 'codeClock-v47';
+                var CACHE_NAME = 'codeClock-v48';
                 self.addEventListener('install', function(e) {
                     e.waitUntil(
                         caches.open(CACHE_NAME).then(function(cache) {
