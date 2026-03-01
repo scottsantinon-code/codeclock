@@ -3396,6 +3396,33 @@
         
         // Start resuscitation (fresh arrest)
         function startFreshArrest() {
+            // Reset all state variables
+            totalSeconds = 0;
+            cprSeconds = CPR_INTERVAL;
+            adrenalineSeconds = ADRENALINE_INTERVAL;
+            rhythmCheckCount = 0;
+            shockCount = 0;
+            adrenalineCount = 0;
+            amiodaroneGiven = false;
+            ecprPromptDismissed = false;
+            roscActive = false;
+            roscTimeStr = null;
+            roscStartTime = null;
+            roscHistory = [];
+            htChecked = {};
+            sectionCollapsed = { immediate: false, reversible: true, escalation: true };
+            sectionAutoCollapsed = {};
+            log = [];
+
+            // Reset terminate button appearance
+            $('btnTerminate').textContent = 'Termination of Resuscitation';
+            $('btnTerminate').style.borderColor = '';
+            $('btnTerminate').style.color = '';
+            $('btnTerminate').disabled = false;
+
+            // Update UI
+            renderHTs();
+
             arrestStartTime = new Date();
             arrestStartTime.setSeconds(0);
             resusStarted = true;
@@ -5054,12 +5081,20 @@
         
         $('btnCopyLog').addEventListener('click', function() {
             var text = log.map(function(e) { return e.time + ' - ' + e.event; }).join('\n');
-            navigator.clipboard.writeText(text).then(function() { alert('Log copied to clipboard'); });
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Log copied to clipboard');
+            }).catch(function(err) {
+                alert('Failed to copy: ' + err.message);
+            });
         });
         
         $('btnCopySummary').addEventListener('click', function() {
             var text = $('logSummaryContent').textContent;
-            navigator.clipboard.writeText(text).then(function() { alert('Summary copied to clipboard'); });
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Summary copied to clipboard');
+            }).catch(function(err) {
+                alert('Failed to copy: ' + err.message);
+            });
         });
         
         document.addEventListener('visibilitychange', function() {
