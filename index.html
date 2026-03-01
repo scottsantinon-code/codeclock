@@ -2997,10 +2997,18 @@
     (function() {
         var resusStarted = false;
         var totalSeconds = 0;
+        // Constants
+        var CPR_INTERVAL = 120;            // 2 minutes between rhythm checks
+        var ADRENALINE_INTERVAL = 240;     // 4 minutes between adrenaline doses
+        var ADRENALINE_DUE_SOON = 60;      // 1 minute - for mid-arrest "due" state
+        var ECPR_PROMPT_TIME = 420;        // 7 minutes - prompt for E-CPR
+        var COLOR_THRESHOLD_URGENT = 10;   // Seconds - turn red
+        var COLOR_THRESHOLD_WARNING = 30;  // Seconds - turn orange
+
         var arrestStartTime = null;
-        var cprSeconds = 120;
+        var cprSeconds = CPR_INTERVAL;
         var rhythmCheckStarted = false;
-        var adrenalineSeconds = 240;
+        var adrenalineSeconds = ADRENALINE_INTERVAL;
         var adrenalineStarted = false;
         var adrenalineCount = 0;
         var shockCount = 0;
@@ -3184,7 +3192,14 @@
                 wakeLock = null;
             }
         }
-        
+
+        function closeAudioContext() {
+            if (audioContext) {
+                audioContext.close().catch(function() {});
+                audioContext = null;
+            }
+        }
+
         // Reveal full UI after first rhythm check
         function revealFullUI() {
             var timerPage = document.querySelector('.timer-page');
@@ -3200,75 +3215,118 @@
         var COLOR_GREEN = '#44ff44';
         var COLOR_RED = '#ff4444';
         var COLOR_ORANGE = '#F59E0B';
-        
-        function getTimerColor(remaining) {
+        var COLOR_NEUTRAL = '#666';
+
+        // Unified color function for all timers
+        // useNeutralDefault: if true, returns neutral gray when not urgent (for secondary timers like adrenaline)
+        function getTimerColor(remaining, useNeutralDefault) {
             if (remaining <= 0) return COLOR_RED;
-            if (remaining <= 10) return COLOR_RED;
-            if (remaining <= 30) return COLOR_ORANGE;
-            return COLOR_GREEN;
+            if (remaining <= COLOR_THRESHOLD_URGENT) return COLOR_RED;
+            if (remaining <= COLOR_THRESHOLD_WARNING) return COLOR_ORANGE;
+            return useNeutralDefault ? COLOR_NEUTRAL : COLOR_GREEN;
         }
         
-        function getAdrenalineColor(remaining) {
-            if (remaining <= 0) return COLOR_RED;
-            if (remaining <= 10) return COLOR_RED;
-            if (remaining <= 30) return COLOR_ORANGE;
-            return '#666'; // Neutral, not green - reduces visual competition
+        // Helper to create log entry HTML
+        function createLogEntryHTML(entry) {
+            return '<div class="log-entry"><span class="time">' + entry.time + '</span><span class="sep"> — </span><span>' + entry.event + '</span></div>';
         }
-        
+
         function addLog(event) {
             var now = new Date();
             var timeStr = now.toTimeString().slice(0, 5);
-            log.push({ time: timeStr, event: event });
-            renderLog();
+            var entry = { time: timeStr, event: event };
+            log.push(entry);
+
+            // Append only the new entry (O(1) instead of O(n))
+            var logEntries = $('logEntries');
+            if (log.length === 1) {
+                // First entry - clear the empty message
+                logEntries.innerHTML = createLogEntryHTML(entry);
+            } else {
+                // Append new entry
+                logEntries.insertAdjacentHTML('beforeend', createLogEntryHTML(entry));
+            }
+
+            invalidateLogSummaryCache();
             updateLogSummary();
         }
         
+        // Log summary caching - these values only change when log entries are added
+        var logSummaryCache = {
+            initialRhythm: null,
+            keyEvents: [],
+            valid: false
+        };
+
+        function invalidateLogSummaryCache() {
+            logSummaryCache.valid = false;
+        }
+
+        function updateLogSummaryCache() {
+            if (logSummaryCache.valid) return;
+
+            // Find initial rhythm (only need to search once until cache is invalidated)
+            logSummaryCache.initialRhythm = null;
+            for (var i = 0; i < log.length; i++) {
+                if (log[i].event.indexOf('VF/VT') !== -1) {
+                    logSummaryCache.initialRhythm = 'VF/VT (shockable)';
+                    break;
+                } else if (log[i].event.indexOf('PEA') !== -1 || log[i].event.indexOf('Asystole') !== -1) {
+                    logSummaryCache.initialRhythm = 'PEA/Asystole (non-shockable)';
+                    break;
+                }
+            }
+
+            // Collect key events
+            logSummaryCache.keyEvents = [];
+            log.forEach(function(entry) {
+                if (entry.event.indexOf('E-CPR:') !== -1) {
+                    logSummaryCache.keyEvents.push(entry.time + ' ' + entry.event);
+                }
+            });
+
+            logSummaryCache.valid = true;
+        }
+
         function updateLogSummary() {
             if (log.length === 0) {
                 $('logSummary').style.display = 'none';
                 return;
             }
-            
+
             $('logSummary').style.display = 'block';
-            
-            // Build summary
+
+            // Update cache if needed
+            updateLogSummaryCache();
+
+            // Build summary - only duration changes on every tick
             var lines = [];
-            
-            // Arrest time
+
+            // Arrest time (static once set)
             if (arrestStartTime) {
                 lines.push('Arrest time: ' + arrestStartTime.toTimeString().slice(0, 5));
             }
-            
-            // Duration
+
+            // Duration (changes every tick - must be computed)
             var mins = Math.floor(totalSeconds / 60);
             var secs = totalSeconds % 60;
             lines.push('Duration: ' + mins + ' min ' + secs + ' sec');
-            
-            // Initial rhythm (find first VF/VT or PEA entry)
-            var initialRhythm = null;
-            for (var i = 0; i < log.length; i++) {
-                if (log[i].event.indexOf('VF/VT') !== -1) {
-                    initialRhythm = 'VF/VT (shockable)';
-                    break;
-                } else if (log[i].event.indexOf('PEA') !== -1 || log[i].event.indexOf('Asystole') !== -1) {
-                    initialRhythm = 'PEA/Asystole (non-shockable)';
-                    break;
-                }
+
+            // Initial rhythm (from cache)
+            if (logSummaryCache.initialRhythm) {
+                lines.push('Initial rhythm: ' + logSummaryCache.initialRhythm);
             }
-            if (initialRhythm) {
-                lines.push('Initial rhythm: ' + initialRhythm);
-            }
-            
-            // Shocks
+
+            // Shocks (uses existing counter)
             if (shockCount > 0) {
                 lines.push('Shocks delivered: ' + shockCount);
             }
-            
-            // Adrenaline
+
+            // Adrenaline (uses existing counter)
             if (adrenalineCount > 0) {
                 lines.push('Adrenaline doses: ' + adrenalineCount);
             }
-            
+
             // ROSC periods
             if (roscHistory.length > 0) {
                 var roscSummary = roscHistory.map(function(r) {
@@ -3279,20 +3337,14 @@
             if (roscActive) {
                 lines.push('Current status: ROSC (ongoing from ' + roscTimeStr + ')');
             }
-            
-            // Key decisions from log
-            var keyEvents = [];
-            log.forEach(function(entry) {
-                if (entry.event.indexOf('E-CPR:') !== -1) {
-                    keyEvents.push(entry.time + ' ' + entry.event);
-                }
-            });
-            if (keyEvents.length > 0) {
+
+            // Key decisions (from cache)
+            if (logSummaryCache.keyEvents.length > 0) {
                 lines.push('');
                 lines.push('Key decisions:');
-                keyEvents.forEach(function(e) { lines.push('  ' + e); });
+                logSummaryCache.keyEvents.forEach(function(e) { lines.push('  ' + e); });
             }
-            
+
             $('logSummaryContent').textContent = lines.join('\n');
         }
         
@@ -3440,12 +3492,12 @@
                 // Set up adrenaline timer based on state
                 if (setupData.adrenalineState === 'given') {
                     adrenalineStarted = true;
-                    adrenalineSeconds = 240;
+                    adrenalineSeconds = ADRENALINE_INTERVAL;
                     $('adrenalineTime').textContent = '4:00';
                     $('adrNote').textContent = 'Tap when given';
                 } else if (setupData.adrenalineState === 'due') {
                     adrenalineStarted = true;
-                    adrenalineSeconds = 60;
+                    adrenalineSeconds = ADRENALINE_DUE_SOON;
                     $('adrenalineTime').textContent = '1:00';
                     $('adrNote').textContent = 'Tap when given';
                 } else {
@@ -3865,7 +3917,7 @@
             }
             
             // E-CPR prompt at 7 minutes if not already shown
-            if (totalSeconds === 420 && !ecprPromptDismissed) {
+            if (totalSeconds === ECPR_PROMPT_TIME && !ecprPromptDismissed) {
                 $('ecprModal').classList.remove('hidden');
             }
             
@@ -3923,7 +3975,7 @@
                 adrHint.textContent = '';
                 adrNote.style.display = 'none';
             } else if (adrenalineStarted) {
-                var adrColor = getAdrenalineColor(adrenalineSeconds);
+                var adrColor = getTimerColor(adrenalineSeconds, true);
                 adrTimeEl.textContent = formatTime(adrenalineSeconds);
                 adrTimeEl.style.color = adrColor;
                 adrBox.style.borderColor = adrColor;
@@ -4036,7 +4088,7 @@
             rhythmCheckStarted = true;
             $('shockCounter').classList.remove('hidden');
             revealFullUI();
-            cprSeconds = 120;
+            cprSeconds = CPR_INTERVAL;
             vibrate(50);
             addLog('Rhythm check #' + rhythmCheckCount + ' (VF/VT) – Shock #' + shockCount);
             $('shockConfirmModal').classList.add('hidden');
@@ -4072,7 +4124,7 @@
             rhythmCheckStarted = true;
             $('shockCounter').classList.remove('hidden');
             revealFullUI();
-            cprSeconds = 120;
+            cprSeconds = CPR_INTERVAL;
             vibrate(50);
             addLog('Rhythm check #' + rhythmCheckCount + ' (VF/VT) – No shock');
             $('shockConfirmModal').classList.add('hidden');
@@ -4088,7 +4140,7 @@
             rhythmCheckCount++;
             rhythmCheckStarted = true;
             revealFullUI();
-            cprSeconds = 120;
+            cprSeconds = CPR_INTERVAL;
             vibrate(50);
             addLog('Rhythm check #' + rhythmCheckCount + ' (PEA/Asystole)');
             
@@ -4107,7 +4159,7 @@
             // Record adrenaline given
             adrenalineCount++;
             adrenalineStarted = true;
-            adrenalineSeconds = 240;
+            adrenalineSeconds = ADRENALINE_INTERVAL;
             vibrate(50);
             addLog('Adrenaline #' + adrenalineCount + ' given');
             $('adrenalineReminderModal').classList.add('hidden');
@@ -4129,7 +4181,7 @@
             if (!resusStarted || roscActive) return;
             adrenalineCount++;
             adrenalineStarted = true;
-            adrenalineSeconds = 240;
+            adrenalineSeconds = ADRENALINE_INTERVAL;
             vibrate(50);
             addLog('Adrenaline #' + adrenalineCount + ' given');
             updateDisplay();
@@ -4254,8 +4306,8 @@
                 });
                 roscActive = false;
                 rhythmCheckStarted = false;
-                cprSeconds = 120;
-                adrenalineSeconds = 240;
+                cprSeconds = CPR_INTERVAL;
+                adrenalineSeconds = ADRENALINE_INTERVAL;
                 adrenalineStarted = false;
                 addLog('Re-arrest (ROSC duration: ' + durationStr + ')');
                 vibrate([200, 100, 200]);
@@ -4287,30 +4339,38 @@
         // Termination button
         $('btnTerminate').addEventListener('click', function() {
             if (!resusStarted) return;
-            
+
             var now = new Date();
             var endTimeStr = now.toTimeString().slice(0, 5);
             var totalMins = Math.floor(totalSeconds / 60);
             var totalSecs = totalSeconds % 60;
             var durationStr = totalMins + ':' + (totalSecs < 10 ? '0' : '') + totalSecs;
-            
+
             addLog('Resuscitation terminated at ' + endTimeStr + ' (duration: ' + durationStr + ')');
-            
-            // Stop timers
+
+            // Stop timers and clean up intervals
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
             resusStarted = false;
             rhythmCheckStarted = false;
             adrenalineStarted = false;
             roscActive = false;
-            
+
+            // Release system resources
+            releaseWakeLock();
+            closeAudioContext();
+
             // Change button to indicate termination
             $('btnTerminate').textContent = 'Resuscitation Terminated';
             $('btnTerminate').style.borderColor = '#ff6b6b';
             $('btnTerminate').style.color = '#ff6b6b';
             $('btnTerminate').disabled = true;
-            
+
             // Hide ROSC button since resuscitation is over
             $('btnRosc').classList.add('hidden');
-            
+
             vibrate([500]);
             updateDisplay();
         });
@@ -4351,17 +4411,25 @@
 
         // Track collapsed state: Immediate expanded, others collapsed by default
         var sectionCollapsed = { immediate: false, reversible: true, escalation: true };
+        // Track which sections have been auto-collapsed due to completion (to avoid re-triggering)
+        var sectionAutoCollapsed = {};
 
         function renderHTs() {
             var actionsHTML = '';
-            actionCategories.forEach(function(category) {
+            actionCategories.forEach(function(category, index) {
                 // Check completion status
                 var checkedCount = category.items.filter(function(item) { return htChecked[item.id]; }).length;
                 var allChecked = checkedCount === category.items.length;
 
-                // Auto-collapse completed sections (only on first completion, allow manual re-expansion)
-                if (allChecked && sectionCollapsed[category.id] === undefined) {
+                // Auto-collapse completed sections and open next (only on first completion)
+                if (allChecked && !sectionAutoCollapsed[category.id]) {
+                    sectionAutoCollapsed[category.id] = true;
                     sectionCollapsed[category.id] = true;
+                    // Open the next section if there is one
+                    if (index < actionCategories.length - 1) {
+                        var nextCategory = actionCategories[index + 1];
+                        sectionCollapsed[nextCategory.id] = false;
+                    }
                 }
 
                 var isCollapsed = sectionCollapsed[category.id];
@@ -4974,15 +5042,14 @@
         }
         window.progReset = progReset;
         
-        // Log
+        // Log - full re-render (only used for mid-arrest backfill)
         function renderLog() {
             if (log.length === 0) {
                 $('logEntries').innerHTML = '<p class="log-empty">No events logged yet</p>';
             } else {
-                $('logEntries').innerHTML = log.map(function(e) {
-                    return '<div class="log-entry"><span class="time">' + e.time + '</span><span class="sep"> — </span><span>' + e.event + '</span></div>';
-                }).join('');
+                $('logEntries').innerHTML = log.map(createLogEntryHTML).join('');
             }
+            invalidateLogSummaryCache();
         }
         
         $('btnCopyLog').addEventListener('click', function() {
