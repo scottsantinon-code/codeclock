@@ -1578,7 +1578,149 @@
             color: #888;
             font-style: italic;
         }
-        
+
+        /* ECPR Results Screen Redesign */
+        .ecpr-result-step {
+            padding-top: 0 !important;
+        }
+
+        .ecpr-result-step .wizard-summary,
+        .ecpr-result-step .wizard-progress {
+            display: none !important;
+        }
+
+        .ecpr-back-link {
+            display: inline-block;
+            color: #888;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .ecpr-back-link:hover {
+            color: #06B6D4;
+        }
+
+        .ecpr-hero {
+            text-align: center;
+            padding: 24px 16px;
+            margin-bottom: 20px;
+        }
+
+        .ecpr-hero-heading {
+            font-size: 1.1rem;
+            color: #888;
+            margin-bottom: 12px;
+            letter-spacing: 0.02em;
+        }
+
+        .ecpr-hero-value {
+            font-size: 4.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+
+        .ecpr-hero-value.good { color: #4ade80; }
+        .ecpr-hero-value.medium { color: #fbbf24; }
+        .ecpr-hero-value.bad { color: #f87171; }
+
+        .ecpr-hero-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .ecpr-hero-badge.good {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .ecpr-hero-badge.medium {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+
+        .ecpr-hero-badge.bad {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        .ecpr-hero-failed {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #f87171;
+        }
+
+        .ecpr-factors-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .ecpr-factors-section {
+            padding: 16px 16px 16px 20px;
+            border-left: 3px solid;
+        }
+
+        .ecpr-factors-section + .ecpr-factors-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .ecpr-factors-inclusion {
+            border-left-color: #4ade80;
+        }
+
+        .ecpr-factors-exclusion {
+            border-left-color: #fbbf24;
+        }
+
+        .ecpr-factors-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #ccc;
+            margin-bottom: 6px;
+        }
+
+        .ecpr-factors-list {
+            font-size: 0.95rem;
+            color: #999;
+            line-height: 1.5;
+        }
+
+        .ecpr-input-summary {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+            padding: 12px;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .ecpr-input-summary-label {
+            color: #555;
+        }
+
+        .ecpr-attribution {
+            font-size: 0.8rem;
+            color: #555;
+            font-style: italic;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .ecpr-attribution a {
+            color: #666;
+        }
+
+        .ecpr-attribution a:hover {
+            color: #06B6D4;
+        }
+
         /* Sequential Wizard UI */
         .wizard {
             padding: 20px;
@@ -2743,18 +2885,33 @@
                 </div>
                 
                 <!-- Result -->
-                <div class="wizard-step" data-step="7">
-                    <button class="wizard-back" onclick="ecprBack(7)">← Back</button>
-                    <div class="wizard-result">
-                        <div class="wizard-result-label">Survival if VA-ECMO initiated</div>
-                        <div class="wizard-result-value" id="ecprWizardResult">—</div>
-                        <div class="wizard-result-label" id="ecprWizardCriteria"></div>
+                <div class="wizard-step ecpr-result-step" data-step="7">
+                    <a class="ecpr-back-link" onclick="ecprBack(7)">← Back</a>
+
+                    <!-- Hero Section -->
+                    <div class="ecpr-hero">
+                        <div class="ecpr-hero-heading">ECMO Candidate Assessment</div>
+                        <div class="ecpr-hero-value" id="ecprWizardResult">—</div>
+                        <div class="ecpr-hero-badge" id="ecprWizardCriteria"></div>
+                        <div class="ecpr-hero-failed" id="ecprWizardFailed"></div>
                     </div>
-                    <div class="wizard-footer">
-                        <strong>Factors favouring inclusion:</strong> Signs of life, any ROSC period<br><br>
-                        <strong>Factors favouring exclusion:</strong> Age >65, EtCO₂ <10, femoral access impossible, aortic regurgitation, suspected aortic dissection
+
+                    <!-- Factors Card -->
+                    <div class="ecpr-factors-card">
+                        <div class="ecpr-factors-section ecpr-factors-inclusion">
+                            <div class="ecpr-factors-title">Factors favouring inclusion</div>
+                            <div class="ecpr-factors-list">Signs of life during CPR, any ROSC period, reversible cause identified</div>
+                        </div>
+                        <div class="ecpr-factors-section ecpr-factors-exclusion">
+                            <div class="ecpr-factors-title">Factors favouring exclusion</div>
+                            <div class="ecpr-factors-list">Age &gt;65, EtCO₂ &lt;10 mmHg, femoral access impossible, aortic regurgitation, suspected aortic dissection</div>
+                        </div>
                     </div>
-                    <div style="margin-top: 16px; font-size: 0.85rem; color: #666; font-style: italic;">Criteria based on <a href="https://ecmo.icu/ecpr-inclusion-criteria/" target="_blank" rel="noopener" style="color: #888;">The Alfred Hospital ECMO guidelines</a></div>
+
+                    <!-- Compact Input Summary -->
+                    <div class="ecpr-input-summary" id="ecprInputSummary"></div>
+
+                    <div class="ecpr-attribution">Criteria based on <a href="https://ecmo.icu/ecpr-inclusion-criteria/" target="_blank" rel="noopener">The Alfred Hospital ECMO guidelines</a></div>
                     <button class="wizard-reset" onclick="ecprReset()">Start Over</button>
                 </div>
             </div>
@@ -4711,28 +4868,61 @@
         function ecprCalculateResult() {
             var metCount = 0;
             var notMetCount = 0;
+            var failedCriteria = [];
+            var criteriaLabels = {
+                withinTime: 'Time limit exceeded',
+                witnessed: 'Unwitnessed arrest',
+                shockable: 'Non-shockable rhythm',
+                bystander: 'No bystander CPR',
+                noEndStage: 'End-stage disease'
+            };
+
             ['withinTime', 'witnessed', 'shockable', 'bystander', 'noEndStage'].forEach(function(key) {
                 if (ecprWizardData[key] === true) metCount++;
-                if (ecprWizardData[key] === false) notMetCount++;
+                if (ecprWizardData[key] === false) {
+                    notMetCount++;
+                    failedCriteria.push(criteriaLabels[key]);
+                }
             });
 
             var resultEl = $('ecprWizardResult');
             var criteriaEl = $('ecprWizardCriteria');
+            var failedEl = $('ecprWizardFailed');
+            var summaryEl = $('ecprInputSummary');
+
             resultEl.classList.remove('good', 'medium', 'bad');
+            criteriaEl.classList.remove('good', 'medium', 'bad');
 
             if (metCount === 5) {
                 resultEl.textContent = '~46%';
                 resultEl.classList.add('good');
                 criteriaEl.textContent = 'All 5 criteria met';
+                criteriaEl.classList.add('good');
+                failedEl.textContent = '';
             } else if (notMetCount === 1) {
                 resultEl.textContent = '~12%';
                 resultEl.classList.add('medium');
                 criteriaEl.textContent = '4 of 5 criteria met';
+                criteriaEl.classList.add('medium');
+                failedEl.textContent = failedCriteria[0];
             } else {
                 resultEl.textContent = 'No survivors';
                 resultEl.classList.add('bad');
                 criteriaEl.textContent = notMetCount + ' criteria not met';
+                criteriaEl.classList.add('bad');
+                failedEl.textContent = failedCriteria.join(' · ');
             }
+
+            // Build compact input summary
+            var summaryParts = [];
+            if (ecprWizardData.age !== null) summaryParts.push('Age ' + ecprWizardData.age);
+            if (ecprWizardData.shockable !== null) summaryParts.push(ecprWizardData.shockable ? 'shockable rhythm' : 'non-shockable');
+            if (ecprWizardData.witnessed !== null) summaryParts.push(ecprWizardData.witnessed ? 'witnessed' : 'unwitnessed');
+            if (ecprWizardData.bystander !== null) summaryParts.push(ecprWizardData.bystander ? 'bystander CPR' : 'no bystander CPR');
+            if (ecprWizardData.withinTime !== null) summaryParts.push(ecprWizardData.withinTime ? 'within time limit' : 'time exceeded');
+            if (ecprWizardData.noEndStage !== null) summaryParts.push(ecprWizardData.noEndStage ? 'no end-stage disease' : 'end-stage disease');
+
+            summaryEl.innerHTML = '<span class="ecpr-input-summary-label">Based on:</span> ' + summaryParts.join(', ');
         }
 
         function ecprBack(fromStep) {
