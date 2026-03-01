@@ -3033,7 +3033,12 @@
         var amiodaroneGiven = false;
         var isShockableRhythm = null;
         var joinedMidArrest = false;
-        
+
+        // Cached tab-related DOM elements (initialized after DOM ready)
+        var allTabBtns = document.querySelectorAll('.tab-btn');
+        var allTabContents = document.querySelectorAll('.tab-content');
+        var tabMoreMenu = document.getElementById('tabMoreMenu');
+
         // Prognosis data from Okubo et al. BMJ 2024 (n=348,996 IHCA)
         // Time-dependent probability among patients pending first ROSC at each minute
         
@@ -3355,34 +3360,36 @@
             tabs.classList.add('expanded');
             // Header stays at default (smaller) size - no expanded class
         }
-        
+
+        // Reusable tab-switching function using cached DOM elements
+        function switchToTab(tabId) {
+            allTabBtns.forEach(function(b) { b.classList.remove('active'); });
+            allTabContents.forEach(function(c) { c.classList.remove('active'); });
+            var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]') || document.querySelector('.tab-more-item[data-tab="' + tabId + '"]');
+            if (btn) btn.classList.add('active');
+            var content = document.getElementById('tab-' + tabId);
+            if (content) content.classList.add('active');
+            tabMoreMenu.classList.add('hidden');
+            updateHeaderSize();
+        }
+
         // Tab switching
         document.querySelectorAll('.tab-btn:not(.tab-more-btn)').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-                document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-                btn.classList.add('active');
-                $('tab-' + btn.getAttribute('data-tab')).classList.add('active');
-                $('tabMoreMenu').classList.add('hidden');
-                updateHeaderSize();
+                switchToTab(btn.getAttribute('data-tab'));
             });
         });
-        
+
         // More menu toggle
         $('tabMoreBtn').addEventListener('click', function(e) {
             e.stopPropagation();
-            $('tabMoreMenu').classList.toggle('hidden');
+            tabMoreMenu.classList.toggle('hidden');
         });
-        
+
         // More menu items
         document.querySelectorAll('.tab-more-item').forEach(function(item) {
             item.addEventListener('click', function() {
-                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-                document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-                $('tabMoreBtn').classList.add('active');
-                $('tab-' + item.getAttribute('data-tab')).classList.add('active');
-                $('tabMoreMenu').classList.add('hidden');
-                updateHeaderSize();
+                switchToTab(item.getAttribute('data-tab'));
             });
         });
         
@@ -3391,7 +3398,7 @@
         
         // Close More menu when clicking elsewhere
         document.addEventListener('click', function() {
-            $('tabMoreMenu').classList.add('hidden');
+            tabMoreMenu.classList.add('hidden');
         });
         
         // Start resuscitation (fresh arrest)
@@ -4268,10 +4275,7 @@
         $('ecprAssess').addEventListener('click', function() {
             $('ecprModal').classList.add('hidden');
             // Switch to E-CPR tab
-            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-            document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-            document.querySelector('[data-tab="ecpr"]').classList.add('active');
-            $('tab-ecpr').classList.add('active');
+            switchToTab('ecpr');
             addLog('E-CPR: Assessing suitability');
         });
         
