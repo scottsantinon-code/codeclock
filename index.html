@@ -3034,10 +3034,12 @@
         var isShockableRhythm = null;
         var joinedMidArrest = false;
 
-        // Cached tab-related DOM elements (initialized after DOM ready)
+        // Cached DOM elements (initialized after DOM ready)
         var allTabBtns = document.querySelectorAll('.tab-btn');
         var allTabContents = document.querySelectorAll('.tab-content');
         var tabMoreMenu = document.getElementById('tabMoreMenu');
+        var timerPageEl = document.querySelector('.timer-page');
+        var tabsEl = document.querySelector('.tabs');
 
         // Prognosis data from Okubo et al. BMJ 2024 (n=348,996 IHCA)
         // Time-dependent probability among patients pending first ROSC at each minute
@@ -3207,9 +3209,8 @@
 
         // Reveal full UI after first rhythm check
         function revealFullUI() {
-            var timerPage = document.querySelector('.timer-page');
-            if (timerPage.classList.contains('initial-state')) {
-                timerPage.classList.remove('initial-state');
+            if (timerPageEl.classList.contains('initial-state')) {
+                timerPageEl.classList.remove('initial-state');
                 $('timerGrid').classList.remove('hidden');
                 $('bottomButtonsRow').classList.remove('hidden');
                 $('btnRoscHistory').classList.remove('hidden');
@@ -3354,11 +3355,10 @@
         }
         
         // Update header size based on active tab
+        // Note: Tabs always stay expanded regardless of which tab is active.
+        // This function exists for potential future conditional logic.
         function updateHeaderSize() {
-            // Tabs always stay expanded (larger) regardless of which tab is active
-            var tabs = document.querySelector('.tabs');
-            tabs.classList.add('expanded');
-            // Header stays at default (smaller) size - no expanded class
+            tabsEl.classList.add('expanded');
         }
 
         // Reusable tab-switching function using cached DOM elements
@@ -3915,14 +3915,6 @@
             $('updateTimeModal').classList.add('hidden');
             updateDisplay();
         });
-        
-        // DEVELOPER NOTE: Timer drift consideration
-        // setInterval can drift on busy devices. For sub-second accuracy, consider computing
-        // elapsed time from timestamps each tick instead of incrementing counters:
-        //   totalSeconds = Math.floor((Date.now() - arrestStartTime) / 1000);
-        //   cprSeconds = CPR_INTERVAL - Math.floor((Date.now() - lastRhythmCheckTime) / 1000);
-        //   adrenalineSeconds = ADRENALINE_INTERVAL - Math.floor((Date.now() - lastAdrenalineTime) / 1000);
-        // For typical 30-60 min resuscitations, drift is likely <5 seconds, which is clinically acceptable.
         
         function tick() {
             totalSeconds++;
