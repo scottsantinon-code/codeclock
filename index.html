@@ -3191,6 +3191,7 @@
         var roscTimeStr = null;
         var roscStartTime = null;
         var roscHistory = [];
+        var terminationTimeStr = null;
         var wakeLock = null;
         
         var calcAge = null;
@@ -3513,6 +3514,11 @@
                 lines.push('Current status: ROSC (ongoing from ' + roscTimeStr + ')');
             }
 
+            // Termination time
+            if (terminationTimeStr) {
+                lines.push('Terminated: ' + terminationTimeStr);
+            }
+
             // Key decisions (from cache)
             if (logSummaryCache.keyEvents.length > 0) {
                 lines.push('');
@@ -3585,6 +3591,7 @@
             roscTimeStr = null;
             roscStartTime = null;
             roscHistory = [];
+            terminationTimeStr = null;
             htChecked = {};
             sectionCollapsed = { immediate: false, reversible: true, escalation: true };
             sectionAutoCollapsed = {};
@@ -4538,6 +4545,7 @@
             var totalSecs = totalSeconds % 60;
             var durationStr = totalMins + ':' + (totalSecs < 10 ? '0' : '') + totalSecs;
 
+            terminationTimeStr = endTimeStr;
             addLog('Resuscitation terminated at ' + endTimeStr + ' (duration: ' + durationStr + ')');
 
             // Stop timers and clean up intervals
