@@ -2720,6 +2720,7 @@
                             <div class="wizard-result-value" id="ihcaNeuroWizard" style="font-size: 3.5rem;">—</div>
                         </div>
                     </div>
+                    <div class="ecpr-input-summary" id="ihcaInputSummary"></div>
                     <div class="wizard-footer">
                         <strong>Data source:</strong> Okubo et al. BMJ 2024<br>
                         US multicentre registry (GWTG-R) of 348,996 adult in-hospital cardiac arrests from 2000–2021.<br><br>
@@ -2728,7 +2729,7 @@
                     <button class="wizard-back" onclick="progBack('ihca-result')">← Back</button>
                     <button class="wizard-reset" onclick="progReset()">Start Over</button>
                 </div>
-                
+
                 <!-- OOHCA Step 2: Rhythm -->
                 <div class="wizard-step" data-step="oohca-2">
                     <div class="wizard-question">Initial rhythm?</div>
@@ -2788,6 +2789,7 @@
                         <div class="wizard-result-value" id="oohcaResultWizard">—</div>
                         <div class="wizard-result-label" id="oohcaResultNote" style="font-size: 1rem; margin-top: 8px;"></div>
                     </div>
+                    <div class="ecpr-input-summary" id="oohcaInputSummary"></div>
                     <div class="wizard-footer">
                         <strong>Data source:</strong> Reynolds et al. Circulation 2016 (ROC-PRIMED)<br>
                         11,368 adult out-of-hospital cardiac arrests across 10 North American sites from 2007–2010.<br><br>
@@ -3119,7 +3121,7 @@
             <div class="amio-alert">
                 <p id="amioDose">Amiodarone 300mg IV</p>
             </div>
-            <button class="btn-modal btn-green" id="amioGiven">Given</button>
+            <button class="btn-modal btn-teal" id="amioGiven">Given</button>
             <button class="btn-modal btn-gray" id="amioOmitted">Omitted</button>
         </div>
     </div>
@@ -3136,7 +3138,7 @@
         <div class="modal">
             <h2 id="adrReminderTitle">Adrenaline</h2>
             <p id="adrReminderContext" class="modal-context"></p>
-            <button class="btn-modal btn-green" id="adrReminderYes">Given</button>
+            <button class="btn-modal btn-teal" id="adrReminderYes">Given</button>
             <button class="btn-modal btn-gray" id="adrReminderOmit">Skipped</button>
         </div>
     </div>
@@ -4826,8 +4828,13 @@
                 if (i === stepNum - 1) dot.classList.add('current');
             });
 
+            // Hide summary and progress on result step
+            var isResult = step === 7;
+            $('ecprSummary').style.display = isResult ? 'none' : '';
+            $('ecprProgress').style.display = isResult ? 'none' : '';
+
             // H6: Update summary
-            renderEcprSummary();
+            if (!isResult) renderEcprSummary();
         }
 
         $('ecprAgeWizard').addEventListener('change', function() {
@@ -5082,8 +5089,13 @@
                 if (i === stepNum - 1) dot.classList.add('current');
             });
 
+            // Hide summary and progress on result steps
+            var isResult = String(step).indexOf('-result') > -1;
+            $('progSummary').style.display = isResult ? 'none' : '';
+            $('progProgress').style.display = isResult ? 'none' : '';
+
             // H6: Update summary
-            renderProgSummary();
+            if (!isResult) renderProgSummary();
         }
 
         // Type selection
@@ -5176,8 +5188,16 @@
                 if (rangeStr === '2-5%' || rangeStr === '5-10%') return 'medium';
                 return 'good';
             }
+
+            // Build input summary
+            var parts = [];
+            parts.push(progSummaryFormatters.age(progWizardData.age));
+            parts.push(progSummaryFormatters.witnessed(progWizardData.witnessed));
+            parts.push(progSummaryFormatters.rhythm(progWizardData.rhythm));
+            parts.push(progWizardData.duration + ' min CPR');
+            $('ihcaInputSummary').innerHTML = '<span class="ecpr-input-summary-label">Based on:</span> ' + parts.join(', ');
         }
-        
+
         // OOHCA result
         $('oohcaShowResult').addEventListener('click', function() {
             progWizardData.oohcaDuration = parseInt($('oohcaMinsWizard').value, 10);
@@ -5188,6 +5208,14 @@
         function calculateOOHCAResult() {
             var phenKey = progWizardData.oohcaRhythm + '_' + progWizardData.oohcaWitnessed + '_' + progWizardData.oohcaBystander;
             var mins = progWizardData.oohcaDuration;
+
+            // Build input summary
+            var parts = [];
+            parts.push(progSummaryFormatters.oohcaRhythm(progWizardData.oohcaRhythm));
+            parts.push(progSummaryFormatters.oohcaWitnessed(progWizardData.oohcaWitnessed));
+            parts.push(progSummaryFormatters.oohcaBystander(progWizardData.oohcaBystander));
+            parts.push(mins + ' min CPR');
+            $('oohcaInputSummary').innerHTML = '<span class="ecpr-input-summary-label">Based on:</span> ' + parts.join(', ');
 
             var resultEl = $('oohcaResultWizard');
             var noteEl = $('oohcaResultNote');
