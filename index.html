@@ -305,7 +305,8 @@
         }
 
         .tab-content.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
             opacity: 1;
             animation: tabFadeIn 0.15s ease-out;
         }
@@ -329,7 +330,7 @@
             padding: 16px;
             display: flex;
             flex-direction: column;
-            min-height: calc(100vh - 60px);
+            flex: 1;
         }
         
         .start-controls {
