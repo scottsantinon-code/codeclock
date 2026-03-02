@@ -327,6 +327,9 @@
         
         .timer-page {
             padding: 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 60px);
         }
         
         .start-controls {
@@ -596,7 +599,8 @@
         .bottom-buttons-row {
             display: flex;
             gap: 12px;
-            margin-top: 64px;
+            margin-top: auto;
+            padding-top: 24px;
             animation: bottomButtonsReveal 0.3s ease-out 0.1s both;
         }
 
@@ -897,8 +901,18 @@
         }
         
         .check-item.checked {
-            background: rgba(68,255,68,0.1);
-            border-color: #44ff44;
+            background: rgba(68,255,68,0.03);
+            border-color: transparent;
+        }
+
+        .check-item.checked .check-label {
+            color: #666;
+        }
+
+        .check-item.checked .check-box {
+            background: rgba(68,255,68,0.3);
+            border-color: rgba(68,255,68,0.5);
+            color: #44ff44;
         }
         
         .check-box {
@@ -913,14 +927,7 @@
             flex-shrink: 0;
             font-size: 16px;
         }
-        
-        .check-item.checked .check-box {
-            background: #44ff44;
-            border-color: #44ff44;
-            color: #000;
-            font-weight: bold;
-        }
-        
+
         .check-label {
             font-weight: 500;
             font-size: 1rem;
