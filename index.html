@@ -58,64 +58,14 @@
         
         .header {
             background: var(--bg-card);
-            padding: 14px 19px;
-            padding-top: calc(14px + env(safe-area-inset-top));
-            padding-bottom: 0px;
+            padding: 8px 16px;
+            padding-top: calc(8px + env(safe-area-inset-top));
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             position: relative;
-            transition: padding 0.2s ease;
         }
-        
-        .header.expanded {
-            padding: 24px 24px;
-            padding-top: calc(24px + env(safe-area-inset-top));
-            padding-bottom: 0px;
-        }
-        
-        .header-left {
-            cursor: pointer;
-        }
-        
-        .header-left-label {
-            font-size: 0.84rem;
-            color: #888;
-            text-transform: uppercase;
-            transition: font-size 0.2s ease;
-        }
-        
-        .header.expanded .header-left-label {
-            font-size: 1.1rem;
-        }
-        
-        .header-time {
-            font-size: 2.16rem;
-            font-weight: bold;
-            font-family: monospace;
-            transition: font-size 0.2s ease;
-        }
-        
-        .header.expanded .header-time {
-            font-size: 3.5rem;
-        }
-        
-        .header-tap-hint {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: -6px;
-            transition: font-size 0.2s ease;
-        }
-        
-        .header.expanded .header-tap-hint {
-            font-size: 0.95rem;
-            margin-top: -4px;
-        }
-        
-        .header-tap-hint.hidden {
-            display: none;
-        }
-        
+
         .header-alert {
             display: none;
             position: absolute;
@@ -146,33 +96,23 @@
         }
         
         .header-title {
-            font-size: 1.32rem;
+            font-size: 1.1rem;
             font-weight: 800;
             background: linear-gradient(135deg, #8B5CF6, #06B6D4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            transition: font-size 0.2s ease;
         }
-        
-        .header.expanded .header-title {
-            font-size: 1.8rem;
-        }
-        
+
         .tabs {
             display: flex;
-            flex-direction: column;
             background: var(--bg-card);
             border-bottom: 1px solid #333;
-            transition: padding 0.2s ease;
         }
-        
-        .tabs.expanded {
-            padding: 0;
-        }
-        
+
         .tab-row {
             display: flex;
+            flex: 1;
         }
         
         .tab-btn {
@@ -182,79 +122,46 @@
             border: none;
             border-bottom: 3px solid transparent;
             color: var(--text-muted);
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             cursor: pointer;
             white-space: nowrap;
             min-width: 0;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            gap: 2px;
-            transition: all 0.2s ease;
+            justify-content: center;
+            gap: 4px;
         }
-        
-        .tabs.expanded .tab-btn {
-            padding: 14px 8px;
-            font-size: 1rem;
-            gap: 6px;
-        }
-        
+
         .tab-btn.active {
             background: var(--bg-card);
             border-bottom-color: #8B5CF6;
             color: #fff;
         }
-        
-        .tab-icon {
-            font-size: 0.9em;
-            margin-right: 2px;
-            opacity: 0.8;
-        }
-        
-        .tab-btn.active .tab-icon {
-            opacity: 1;
-        }
-        
+
         .tab-icon-img {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             filter: invert(1);
             opacity: 0.7;
-            transition: all 0.2s ease;
         }
-        
-        .tabs.expanded .tab-icon-img {
-            width: 28px;
-            height: 28px;
-        }
-        
-        .tab-icon-img.icon-large {
-            width: 48px;
-            height: 48px;
-        }
-        
-        .tab-icon-img.icon-medium {
-            width: 18px;
-            height: 18px;
-        }
-        
+
         .tab-btn.active .tab-icon-img {
             opacity: 1;
         }
-        
+
         .tab-more-container {
             position: relative;
             flex: 1;
         }
-        
+
         .tab-more-btn {
             width: 100%;
         }
-        
+
         .more-dots {
-            font-size: 0.6rem;
+            font-size: 0.5rem;
             letter-spacing: 1px;
-            display: block;
         }
         
         .tab-more-menu {
@@ -332,7 +239,20 @@
             flex-direction: column;
             flex: 1;
         }
-        
+
+        .arrest-time-display {
+            text-align: center;
+            padding: 12px 0;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+        }
+
+        .arrest-time-display:active {
+            opacity: 0.7;
+        }
+
         .start-controls {
             margin-bottom: 16px;
         }
@@ -2499,15 +2419,7 @@
     
     <div id="app" class="hidden">
         <div class="header">
-            <div class="header-left" id="headerLeft">
-                <div class="header-left-label">Time since arrest</div>
-                <div class="header-time" id="totalTime">0:00</div>
-                <div class="header-tap-hint hidden" id="headerTapHint">tap to update</div>
-                <div class="header-rosc" id="roscDisplay"></div>
-            </div>
-            <div style="text-align: right;">
-                <div class="header-title">CodeClock</div>
-            </div>
+            <div class="header-title">CodeClock</div>
             <div class="header-alert" id="headerAlert"></div>
         </div>
         
@@ -2534,6 +2446,7 @@
         
         <div class="tab-content active" id="tab-timer">
             <div class="timer-page initial-state">
+                <div class="arrest-time-display" id="arrestTimeDisplay">TIME SINCE ARREST: <span id="totalTime">--:--</span></div>
                 <div class="rhythm-check-box" id="rhythmCheckBox">
                     <div class="timer-box-label" id="rhythmCheckLabel">Rhythm Check</div>
                     <div class="timer-box-time hidden" id="cprTime"></div>
@@ -3111,7 +3024,7 @@
             <div class="start-time-display" style="margin: 16px 0;">
                 <input type="time" class="time-picker" id="updateTime">
             </div>
-            <button class="btn-modal btn-green" id="btnConfirmUpdate">Update</button>
+            <button class="btn-modal btn-teal" id="btnConfirmUpdate">Update</button>
             <button class="btn-modal btn-gray" id="btnCancelUpdate">Cancel</button>
         </div>
     </div>
@@ -4058,8 +3971,8 @@
         });
         
         
-        // Update arrest time - click header to update
-        $('headerLeft').addEventListener('click', function() {
+        // Update arrest time - click time display to update
+        $('arrestTimeDisplay').addEventListener('click', function() {
             if (!arrestStartTime) return;
             var hours = (arrestStartTime.getHours() < 10 ? '0' : '') + arrestStartTime.getHours();
             var mins = (arrestStartTime.getMinutes() < 10 ? '0' : '') + arrestStartTime.getMinutes();
