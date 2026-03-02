@@ -12,7 +12,6 @@
             --green: #44ff44;
             --red: #ff4444;
             --red-light: #ff6b6b;
-            --orange: #F59E0B;
             --teal: #06B6D4;
             --bg-dark: #1a1a2e;
             --bg-card: #2a2a4e;
@@ -800,7 +799,7 @@
         
         .btn-green { background: #44ff44; color: #000; font-weight: bold; }
         .btn-teal { background: #06B6D4; color: #000; font-weight: bold; }
-        .btn-orange { background: #F59E0B; color: #000; }
+        .btn-orange { background: #06B6D4; color: #000; }
         .btn-gray { background: #666; color: #fff; }
         
         .amio-alert {
@@ -812,7 +811,7 @@
             font-size: 1.3rem;
             font-weight: bold;
             margin-bottom: 8px;
-            color: var(--orange);
+            color: var(--teal);
         }
         
         .amio-alert .sub {
@@ -928,7 +927,7 @@
         }
         
         .check-arrow {
-            color: #F59E0B;
+            color: #06B6D4;
             margin-left: 8px;
             font-size: 0.9rem;
         }
@@ -1175,7 +1174,7 @@
         }
         
         .prognosis-box .prog-value.good { color: #44ff44; }
-        .prognosis-box .prog-value.medium { color: #F59E0B; }
+        .prognosis-box .prog-value.medium { color: #06B6D4; }
         .prognosis-box .prog-value.bad { color: #ff6b6b; }
         
         .stop-footer {
@@ -1276,7 +1275,7 @@
         }
         
         .oohca-probability.medium {
-            color: #F59E0B;
+            color: #06B6D4;
         }
         
         .oohca-probability.bad {
@@ -1527,7 +1526,7 @@
         }
         
         .ecpr-survival.good { background: rgba(68,255,68,0.1); border: 2px solid #44ff44; }
-        .ecpr-survival.medium { background: rgba(255,165,0,0.1); border: 2px solid #F59E0B; }
+        .ecpr-survival.medium { background: rgba(6,182,212,0.1); border: 2px solid #06B6D4; }
         .ecpr-survival.bad { background: rgba(255,68,68,0.1); border: 2px solid #ff6b6b; }
         .ecpr-survival.neutral { background: rgba(255,255,255,0.05); border: 2px solid #666; }
         
@@ -1543,7 +1542,7 @@
         }
         
         .ecpr-survival.good .value { color: #44ff44; }
-        .ecpr-survival.medium .value { color: #F59E0B; }
+        .ecpr-survival.medium .value { color: #06B6D4; }
         .ecpr-survival.bad .value { color: #ff6b6b; }
         .ecpr-survival.neutral .value { color: #888; font-size: 1.15rem; }
         
@@ -1996,7 +1995,7 @@
         }
         
         .wizard-result-value.good { color: #44ff44; }
-        .wizard-result-value.medium { color: #F59E0B; }
+        .wizard-result-value.medium { color: #06B6D4; }
         .wizard-result-value.bad { color: #ff6b6b; }
         
         .wizard-result-label {
@@ -2266,7 +2265,7 @@
         }
         
         .landing-btn-progress {
-            background: var(--orange);
+            background: var(--teal);
             color: #000;
         }
         
@@ -2890,7 +2889,7 @@
 
                     <!-- Hero Section -->
                     <div class="ecpr-hero">
-                        <div class="ecpr-hero-heading">ECMO Candidate Assessment</div>
+                        <div class="ecpr-hero-heading">Survival if VA-ECMO initiated</div>
                         <div class="ecpr-hero-value" id="ecprWizardResult">—</div>
                         <div class="ecpr-hero-badge" id="ecprWizardCriteria"></div>
                         <div class="ecpr-hero-failed" id="ecprWizardFailed"></div>
@@ -3160,7 +3159,7 @@
         var ADRENALINE_DUE_SOON = 60;      // 1 minute - for mid-arrest "due" state
         var ECPR_PROMPT_TIME = 420;        // 7 minutes - prompt for E-CPR
         var COLOR_THRESHOLD_URGENT = 10;   // Seconds - turn red
-        var COLOR_THRESHOLD_WARNING = 30;  // Seconds - turn orange
+        var COLOR_THRESHOLD_WARNING = 30;  // Seconds - turn teal
 
         var arrestStartTime = null;
         var cprSeconds = CPR_INTERVAL;
@@ -3377,7 +3376,7 @@
         // Color constants (matching CSS variables)
         var COLOR_GREEN = '#44ff44';
         var COLOR_RED = '#ff4444';
-        var COLOR_ORANGE = '#F59E0B';
+        var COLOR_TEAL = '#06B6D4';
         var COLOR_NEUTRAL = '#666';
 
         // Unified color function for all timers
@@ -3385,7 +3384,7 @@
         function getTimerColor(remaining, useNeutralDefault) {
             if (remaining <= 0) return COLOR_RED;
             if (remaining <= COLOR_THRESHOLD_URGENT) return COLOR_RED;
-            if (remaining <= COLOR_THRESHOLD_WARNING) return COLOR_ORANGE;
+            if (remaining <= COLOR_THRESHOLD_WARNING) return COLOR_TEAL;
             return useNeutralDefault ? COLOR_NEUTRAL : COLOR_GREEN;
         }
         
