@@ -633,10 +633,15 @@
             display: none;
         }
         
-        .header-rosc {
-            font-size: 0.8rem;
+        .rosc-display {
+            font-size: 0.85rem;
             color: #44ff44;
-            margin-top: 4px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .rosc-display:empty {
+            display: none;
         }
         
         /* P4: Modal transitions */
@@ -2447,6 +2452,7 @@
         <div class="tab-content active" id="tab-timer">
             <div class="timer-page initial-state">
                 <div class="arrest-time-display" id="arrestTimeDisplay">TIME SINCE ARREST: <span id="totalTime">--:--</span></div>
+                <div class="rosc-display" id="roscDisplay"></div>
                 <div class="rhythm-check-box" id="rhythmCheckBox">
                     <div class="timer-box-label" id="rhythmCheckLabel">Rhythm Check</div>
                     <div class="timer-box-time hidden" id="cprTime"></div>
