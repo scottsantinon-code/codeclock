@@ -2360,7 +2360,24 @@
         <button class="landing-btn landing-btn-progress" id="btnCodeInProgress">Resus in Progress</button>
         <div class="landing-copyright">© 2026 Critical Condition<br><a href="https://www.criticalcondition.com.au" style="color: inherit; opacity: 0.7;">www.criticalcondition.com.au</a></div>
     </div>
-    
+
+    <!-- Disclaimer Modal -->
+    <div class="modal-overlay" id="disclaimerModal" style="display: none;">
+        <div class="modal" style="max-width: 340px; text-align: center;">
+            <h2 style="margin-bottom: 16px;">CodeClock</h2>
+            <p style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 16px;">
+                Clinical decision support tool for healthcare professionals.<br>
+                Not a substitute for clinical judgement.
+            </p>
+            <label style="display: flex; align-items: flex-start; gap: 10px; text-align: left; margin-bottom: 16px; cursor: pointer;">
+                <input type="checkbox" id="disclaimerCheck" style="margin-top: 3px; width: 18px; height: 18px;">
+                <span style="font-size: 12px; line-height: 1.5;">I am a healthcare professional and agree to the <strong>Terms of Use</strong></span>
+            </label>
+            <button id="disclaimerAccept" class="btn-modal btn-green" style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>Continue</button>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">Full terms available in Reference tab</p>
+        </div>
+    </div>
+
     <!-- Setup Modal for Code in Progress -->
     <div class="modal-overlay hidden" id="setupModal">
         <div class="modal setup-modal">
@@ -2963,12 +2980,8 @@
                 • Any claim that your use of the application caused damage to a third party<br>
                 • Any medical malpractice or negligence claims related to your use of the application</p>
                 
-                <h4>10. Not a Medical Device</h4>
-                <p>This application is <strong>not a medical device</strong> and has not been cleared or approved by the Therapeutic Goods Administration (TGA), Food and Drug Administration (FDA), or any other regulatory body. It does not:</p>
-                <p>• Diagnose, treat, cure, or prevent any disease<br>
-                • Monitor vital signs or physiological parameters<br>
-                • Connect to or control any medical equipment<br>
-                • Make autonomous clinical decisions</p>
+                <h4>10. Intended Use & Regulatory Status</h4>
+                <p>This application is intended for education and clinical reasoning support. It is not intended to diagnose, treat, or replace clinical judgement. Regulatory status has not been determined; users must not rely on this tool for clinical decisions without independent verification.</p>
                 <p>This application is a software tool that displays reference information and timing functions only.</p>
                 
                 <h4>11. Updates & Changes</h4>
@@ -3019,9 +3032,10 @@
                 <p>Critical Condition develops clinical decision support tools for healthcare professionals:</p>
                 <p style="margin-top: 8px;">
                     <strong>CodeClock</strong> – Cardiac arrest timing & management<br>
-                    <strong>BloodGasPro</strong> – ABG interpretation (Traditional & Stewart)<br>
-                    <strong>IntubAid</strong> – Airway management cognitive aid<br>
-                    <strong>METmate</strong> – Deteriorating patient assessment
+                    <strong>LabLogic</strong> – Laboratory investigation interpreter<br>
+                    <strong>BloodGasPro</strong> – ABG interpretation<br>
+                    <strong>CodeClock</strong> – Cardiac arrest timing & management<br>
+                    <strong>IntubAid</strong> – Airway management cognitive aid
                 </p>
                 <p style="margin-top: 8px;"><a href="https://www.criticalcondition.com.au" target="_blank" rel="noopener" style="color: var(--teal);">www.criticalcondition.com.au</a></p>
 
@@ -3735,6 +3749,47 @@
             }
         }
         
+        // Disclaimer handling
+        var disclaimerModal = $('disclaimerModal');
+        var disclaimerCheck = $('disclaimerCheck');
+        var disclaimerAccept = $('disclaimerAccept');
+        var landingScreen = $('landingScreen');
+
+        function checkDisclaimer() {
+            if (localStorage.getItem('codeclock_terms_accepted') === 'true') {
+                disclaimerModal.style.display = 'none';
+                landingScreen.style.opacity = '1';
+            } else {
+                disclaimerModal.style.display = 'flex';
+                landingScreen.style.opacity = '0.3';
+                landingScreen.style.pointerEvents = 'none';
+            }
+        }
+
+        disclaimerCheck.addEventListener('change', function() {
+            if (this.checked) {
+                disclaimerAccept.disabled = false;
+                disclaimerAccept.style.opacity = '1';
+                disclaimerAccept.style.cursor = 'pointer';
+            } else {
+                disclaimerAccept.disabled = true;
+                disclaimerAccept.style.opacity = '0.5';
+                disclaimerAccept.style.cursor = 'not-allowed';
+            }
+        });
+
+        disclaimerAccept.addEventListener('click', function() {
+            if (disclaimerCheck.checked) {
+                localStorage.setItem('codeclock_terms_accepted', 'true');
+                localStorage.setItem('codeclock_terms_date', new Date().toISOString());
+                disclaimerModal.style.display = 'none';
+                landingScreen.style.opacity = '1';
+                landingScreen.style.pointerEvents = 'auto';
+            }
+        });
+
+        checkDisclaimer();
+
         // Landing screen handlers
         $('btnNewCode').addEventListener('click', startFreshArrest);
         
