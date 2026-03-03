@@ -84,6 +84,7 @@
             z-index: 10;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
         }
         
         .header-alert.show {
@@ -117,19 +118,19 @@
         
         .tab-btn {
             flex: 1;
-            padding: 12px 8px;
+            padding: 16px 8px;
             background: transparent;
             border: none;
             border-bottom: 3px solid transparent;
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 1.1rem;
             cursor: pointer;
             white-space: nowrap;
             min-width: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
         }
 
         .tab-btn.active {
@@ -139,8 +140,8 @@
         }
 
         .tab-icon-img {
-            width: 22px;
-            height: 22px;
+            width: 28px;
+            height: 28px;
             filter: invert(1);
             opacity: 0.7;
         }
@@ -159,9 +160,10 @@
         }
 
         .more-dots {
-            font-size: 0.7rem;
-            letter-spacing: 1px;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
             display: block;
+            line-height: 28px;
         }
         
         .tab-more-menu {
@@ -794,7 +796,6 @@
 
         .ht-section-header.complete {
             background: rgba(68,255,68,0.1);
-            border: 1px solid #44ff44;
         }
 
         .ht-section-header.complete .title {
@@ -3486,7 +3487,12 @@
                 switchToTab(item.getAttribute('data-tab'));
             });
         });
-        
+
+        // Header alert click - return to timer page
+        $('headerAlert').addEventListener('click', function() {
+            switchToTab('timer');
+        });
+
         // Initialize header size
         updateHeaderSize();
         
