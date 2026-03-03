@@ -3127,7 +3127,7 @@
         var calcMins = 0;
         
         var ecprData = { withinTime: null, witnessed: null, shockable: null, bystander: null, noEndStage: null };
-        var amiodaroneGiven = false;
+        var amiodaroneDoses = 0;  // 0=none, 1=first dose (300mg), 2=second dose (150mg)
         var isShockableRhythm = null;
         var joinedMidArrest = false;
 
@@ -3429,6 +3429,11 @@
                 lines.push('Adrenaline doses: ' + adrenalineCount);
             }
 
+            // Amiodarone
+            if (amiodaroneDoses > 0) {
+                lines.push('Amiodarone doses: ' + amiodaroneDoses);
+            }
+
             // ROSC periods
             if (roscHistory.length > 0) {
                 var roscSummary = roscHistory.map(function(r) {
@@ -3521,7 +3526,7 @@
             rhythmCheckCount = 0;
             shockCount = 0;
             adrenalineCount = 0;
-            amiodaroneGiven = false;
+            amiodaroneDoses = 0;
             ecprPromptDismissed = false;
             roscActive = false;
             roscTimeStr = null;
@@ -3584,17 +3589,21 @@
             shockCount = setupData.shocks;
             isShockableRhythm = setupData.isShockable;
             
-            // Set amiodarone state
-            amiodaroneGiven = setupData.amiodaroneGiven || false;
-            
+            // Set amiodarone state (if given prior, assume first dose; if 5+ shocks, assume both doses)
+            if (setupData.amiodaroneGiven) {
+                amiodaroneDoses = shockCount >= 5 ? 2 : 1;
+            } else {
+                amiodaroneDoses = 0;
+            }
+
             // Set adrenaline state
             adrenalineCount = setupData.adrenalineCount;
-            
+
             // Backfill log
             var startTimeStr = formatTime(0);
             log.push({ time: startTimeStr, event: 'Resuscitation started' });
             log.push({ time: startTimeStr, event: 'Joined mid-arrest (' + Math.floor(totalSeconds / 60) + ' minutes in)' });
-            
+
             if (shockCount > 0) {
                 log.push({ time: startTimeStr, event: 'Initial rhythm: Shockable (VF/VT)' });
                 log.push({ time: startTimeStr, event: 'Shocks prior to arrival: ' + shockCount });
@@ -3603,8 +3612,8 @@
             } else if (isShockableRhythm === false) {
                 log.push({ time: startTimeStr, event: 'Initial rhythm: Non-shockable (PEA/Asystole)' });
             }
-            
-            if (amiodaroneGiven) {
+
+            if (amiodaroneDoses > 0) {
                 log.push({ time: startTimeStr, event: 'Amiodarone given prior to arrival' });
             }
             
@@ -3701,17 +3710,16 @@
                     
                     // Amiodarone popup if needed (after adrenaline handled)
                     setTimeout(function() {
-                        if (shockCount >= 3 && !amiodaroneGiven) {
-                            if (shockCount === 3) {
-                                $('amioTitle').textContent = '3rd Shock';
-                                $('amioDose').textContent = 'Amiodarone 300mg IV';
-                            } else if (shockCount === 5) {
-                                $('amioTitle').textContent = '5th Shock';
-                                $('amioDose').textContent = 'Amiodarone 150mg IV';
-                            } else {
-                                $('amioTitle').textContent = 'Shock #' + shockCount;
-                                $('amioDose').textContent = 'Amiodarone 150mg IV (if not already given)';
-                            }
+                        // First dose (300mg) at 3+ shocks if not given
+                        if (shockCount >= 3 && amiodaroneDoses === 0) {
+                            $('amioTitle').textContent = shockCount === 3 ? '3rd Shock' : 'Shock #' + shockCount;
+                            $('amioDose').textContent = 'Amiodarone 300mg IV';
+                            $('amioModal').classList.remove('hidden');
+                        }
+                        // Second dose (150mg) at 5+ shocks if first given but not second
+                        else if (shockCount >= 5 && amiodaroneDoses === 1) {
+                            $('amioTitle').textContent = shockCount === 5 ? '5th Shock' : 'Shock #' + shockCount;
+                            $('amioDose').textContent = 'Amiodarone 150mg IV';
                             $('amioModal').classList.remove('hidden');
                         }
                     }, 500);
@@ -4242,12 +4250,12 @@
             }
             
             // Amiodarone prompts
-            if (shockCount === 3 && !amiodaroneGiven) {
+            if (shockCount === 3 && amiodaroneDoses === 0) {
                 $('amioTitle').textContent = '3rd Shock';
                 $('amioDose').textContent = 'Amiodarone 300mg IV';
                 $('amioModal').classList.remove('hidden');
             }
-            if (shockCount === 5 && !amiodaroneGiven) {
+            if (shockCount === 5 && amiodaroneDoses === 1) {
                 $('amioTitle').textContent = '5th Shock';
                 $('amioDose').textContent = 'Amiodarone 150mg IV';
                 $('amioModal').classList.remove('hidden');
@@ -4354,12 +4362,12 @@
                 shockCount++;
                 vibrate(50);
                 addLog('Shock #' + shockCount);
-                if (shockCount === 3 && !amiodaroneGiven) {
+                if (shockCount === 3 && amiodaroneDoses === 0) {
                     $('amioTitle').textContent = '3rd Shock';
                     $('amioDose').textContent = 'Amiodarone 300mg IV';
                     $('amioModal').classList.remove('hidden');
                 }
-                if (shockCount === 5 && !amiodaroneGiven) {
+                if (shockCount === 5 && amiodaroneDoses === 1) {
                     $('amioTitle').textContent = '5th Shock';
                     $('amioDose').textContent = 'Amiodarone 150mg IV';
                     $('amioModal').classList.remove('hidden');
@@ -4394,21 +4402,23 @@
             ecprPromptDismissed = true;
         });
         
-        $('amioGiven').addEventListener('click', function() { 
+        $('amioGiven').addEventListener('click', function() {
             $('amioModal').classList.add('hidden');
-            amiodaroneGiven = true;
-            addLog('Amiodarone given');
-            // Show E-CPR if this was rhythm check #2 and not yet dismissed
+            amiodaroneDoses++;
+            var doseMsg = amiodaroneDoses === 1 ? 'Amiodarone 300mg given' : 'Amiodarone 150mg given';
+            addLog(doseMsg);
+            // Show E-CPR if this was rhythm check #3 and not yet dismissed
             if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
                 $('ecprModal').classList.remove('hidden');
             }
         });
-        
-        $('amioOmitted').addEventListener('click', function() { 
+
+        $('amioOmitted').addEventListener('click', function() {
             $('amioModal').classList.add('hidden');
-            amiodaroneGiven = true; // Mark as handled so it doesn't prompt again
-            addLog('Amiodarone omitted');
-            // Show E-CPR if this was rhythm check #2 and not yet dismissed
+            var doseMsg = amiodaroneDoses === 0 ? 'Amiodarone 300mg omitted' : 'Amiodarone 150mg omitted';
+            amiodaroneDoses++; // Mark as handled so it doesn't prompt again
+            addLog(doseMsg);
+            // Show E-CPR if this was rhythm check #3 and not yet dismissed
             if (rhythmCheckCount === 3 && !ecprPromptDismissed) {
                 $('ecprModal').classList.remove('hidden');
             }
