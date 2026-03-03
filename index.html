@@ -61,7 +61,7 @@
             padding: 8px 16px;
             padding-top: calc(8px + env(safe-area-inset-top));
             display: flex;
-            justify-content: center;
+            justify-content: flex-end;
             align-items: center;
             position: relative;
         }
@@ -117,19 +117,18 @@
         
         .tab-btn {
             flex: 1;
-            padding: 10px 4px;
+            padding: 12px 8px;
             background: transparent;
             border: none;
             border-bottom: 3px solid transparent;
             color: var(--text-muted);
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             cursor: pointer;
             white-space: nowrap;
             min-width: 0;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
             gap: 4px;
         }
 
@@ -140,8 +139,8 @@
         }
 
         .tab-icon-img {
-            width: 16px;
-            height: 16px;
+            width: 22px;
+            height: 22px;
             filter: invert(1);
             opacity: 0.7;
         }
@@ -160,8 +159,9 @@
         }
 
         .more-dots {
-            font-size: 0.5rem;
+            font-size: 0.7rem;
             letter-spacing: 1px;
+            display: block;
         }
         
         .tab-more-menu {
@@ -573,8 +573,8 @@
             margin-top: 8px;
             font-size: 0.9rem;
             background: transparent;
-            color: #06B6D4;
-            border: 1px solid #06B6D4;
+            color: #888;
+            border: 1px solid #555;
             border-radius: 8px;
             cursor: pointer;
         }
@@ -3303,7 +3303,6 @@
                 timerPageEl.classList.remove('initial-state');
                 $('timerGrid').classList.remove('hidden');
                 $('bottomButtonsRow').classList.remove('hidden');
-                $('btnRoscHistory').classList.remove('hidden');
             }
         }
         
@@ -3611,9 +3610,7 @@
                 $('rhythmCheckBox').classList.add('hidden');
                 $('timerGrid').classList.remove('hidden');
                 $('bottomButtonsRow').classList.remove('hidden');
-                $('btnRoscHistory').classList.remove('hidden');
-                $('headerTapHint').classList.remove('hidden');
-                
+
                 if (isShockableRhythm) {
                     $('shockCounter').classList.remove('hidden');
                     $('shockCount').textContent = shockCount;
@@ -4128,15 +4125,7 @@
             // ROSC button and display
             var roscBtn = $('btnRosc');
             var roscHistoryBtn = $('btnRoscHistory');
-            var headerTapHint = $('headerTapHint');
-            
-            // Show tap to update hint once resuscitation has started
-            if (resusStarted) {
-                headerTapHint.classList.remove('hidden');
-            } else {
-                headerTapHint.classList.add('hidden');
-            }
-            
+
             if (resusStarted && rhythmCheckStarted) {
                 roscBtn.classList.remove('hidden');
                 if (roscActive) {
