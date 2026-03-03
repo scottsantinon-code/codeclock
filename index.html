@@ -3513,6 +3513,11 @@
             totalSeconds = 0;
             cprSeconds = CPR_INTERVAL;
             adrenalineSeconds = ADRENALINE_INTERVAL;
+            rhythmCheckStarted = false;
+            adrenalineStarted = false;
+            isShockableRhythm = null;
+            joinedMidArrest = false;
+            ecprRemindTime = null;
             rhythmCheckCount = 0;
             shockCount = 0;
             adrenalineCount = 0;
@@ -3536,6 +3541,15 @@
 
             // Update UI
             renderHTs();
+
+            // Reset timer page to initial state
+            document.querySelector('.timer-page').classList.add('initial-state');
+            $('rhythmCheckBox').classList.remove('hidden');
+            $('timerGrid').classList.add('hidden');
+            $('bottomButtonsRow').classList.add('hidden');
+            $('shockCounter').classList.add('hidden');
+            $('btnRoscHistory').classList.add('hidden');
+            $('roscDisplay').textContent = '';
 
             arrestStartTime = new Date();
             arrestStartTime.setSeconds(0);
@@ -3655,7 +3669,7 @@
                         adrenalineSeconds = 0;
                         $('adrenalineTime').textContent = 'DUE';
                         $('adrNote').textContent = 'Tap when given';
-                        $('adrenalineTimer').classList.add('overdue');
+                        $('adrenalineTimer').classList.add('expired');
                     } else {
                         // Waiting for 2nd shock
                         $('adrenalineTime').textContent = 'TAP';
