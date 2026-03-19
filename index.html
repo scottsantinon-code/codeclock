@@ -2350,6 +2350,165 @@
             margin-bottom: 16px;
             min-height: 1.2em;
         }
+
+        /* Tour styles */
+        .tour-welcome {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 24px;
+        }
+
+        .tour-welcome.hidden {
+            display: none;
+        }
+
+        .tour-welcome-content {
+            text-align: center;
+            max-width: 320px;
+        }
+
+        .tour-welcome h2 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tour-welcome p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        .tour-welcome-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .tour-btn-yes {
+            background: var(--teal);
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tour-btn-no {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .tour-overlay.active {
+            pointer-events: auto;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .tour-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.75);
+        }
+
+        .tour-spotlight {
+            position: absolute;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.75);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tour-tooltip {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--teal);
+            border-radius: 12px;
+            padding: 16px;
+            max-width: 300px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            z-index: 10001;
+        }
+
+        .tour-tooltip-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--teal);
+            margin-bottom: 8px;
+        }
+
+        .tour-tooltip-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .tour-tooltip-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tour-tooltip-skip {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+
+        .tour-tooltip-next {
+            background: var(--teal);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tour-step-indicator {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -3103,6 +3262,34 @@
         </div>
     </div>
 
+    <!-- Tour Welcome Modal -->
+    <div class="tour-welcome hidden" id="tourWelcome">
+        <div class="tour-welcome-content">
+            <h2>Welcome to CodeClock</h2>
+            <p>Want a quick tour of the features?</p>
+            <div class="tour-welcome-buttons">
+                <button class="tour-btn-yes" id="tourStart">Yes, show me</button>
+                <button class="tour-btn-no" id="tourSkip">No, continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tour Overlay -->
+    <div class="tour-overlay" id="tourOverlay">
+        <div class="tour-spotlight" id="tourSpotlight"></div>
+        <div class="tour-tooltip" id="tourTooltip">
+            <div class="tour-tooltip-title" id="tourTitle"></div>
+            <div class="tour-tooltip-text" id="tourText"></div>
+            <div class="tour-tooltip-buttons">
+                <button class="tour-tooltip-skip" id="tourEnd">Skip tour</button>
+                <div>
+                    <span class="tour-step-indicator" id="tourStepIndicator"></span>
+                    <button class="tour-tooltip-next" id="tourNext">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     (function() {
         var resusStarted = false;
@@ -3785,10 +3972,188 @@
                 disclaimerModal.style.display = 'none';
                 landingScreen.style.opacity = '1';
                 landingScreen.style.pointerEvents = 'auto';
+
+                // Show tour welcome if not completed
+                if (localStorage.getItem('codeclock_tour_completed') !== 'true') {
+                    showTourWelcome();
+                }
             }
         });
 
         checkDisclaimer();
+
+        // ========== TOUR SYSTEM ==========
+        var tourSteps = [
+            {
+                target: '[data-tab="timer"]',
+                title: 'Timer',
+                text: 'Tap the rhythm at each check. CodeClock runs the ALS algorithm in the background and prompts when drugs are due.',
+                position: 'bottom'
+            },
+            {
+                target: '[data-tab="hts"]',
+                title: 'Actions',
+                text: 'Actions, not acronyms. Specific checks and interventions, organized by priority — not a list to memorize.',
+                position: 'bottom'
+            },
+            {
+                target: '[data-tab="stop"]',
+                title: 'Prognosis',
+                text: 'Evidence-based survival data from 300,000+ real patients to inform difficult conversations.',
+                position: 'left',
+                inMoreMenu: true
+            },
+            {
+                target: '[data-tab="ecpr"]',
+                title: 'ECPR Criteria',
+                text: 'Quickly assess ECMO candidacy.',
+                position: 'left',
+                inMoreMenu: true
+            },
+            {
+                target: '#tourDrugsIOLog',
+                title: 'Drugs, IO & Event Log',
+                text: 'Drug dosing, IO reference, and automatic event logging.',
+                position: 'left',
+                inMoreMenu: true,
+                multiTarget: ['[data-tab="drugs"]', '[data-tab="io"]', '[data-tab="log"]']
+            }
+        ];
+
+        var currentTourStep = 0;
+        var tourWelcome = $('tourWelcome');
+        var tourOverlay = $('tourOverlay');
+        var tourSpotlight = $('tourSpotlight');
+        var tourTooltip = $('tourTooltip');
+        var tourTitle = $('tourTitle');
+        var tourText = $('tourText');
+        var tourStepIndicator = $('tourStepIndicator');
+        var tourNextBtn = $('tourNext');
+
+        function showTourWelcome() {
+            tourWelcome.classList.remove('hidden');
+        }
+
+        function hideTourWelcome() {
+            tourWelcome.classList.add('hidden');
+        }
+
+        function startTour() {
+            hideTourWelcome();
+            currentTourStep = 0;
+
+            // Show the main app interface for the tour
+            landingScreen.classList.add('hidden');
+            $('app').classList.remove('hidden');
+
+            // Start with timer tab active
+            switchToTab('timer');
+
+            setTimeout(function() {
+                showTourStep(currentTourStep);
+            }, 300);
+        }
+
+        function showTourStep(stepIndex) {
+            var step = tourSteps[stepIndex];
+
+            // Open More menu if needed
+            if (step.inMoreMenu) {
+                tabMoreMenu.classList.remove('hidden');
+            } else {
+                tabMoreMenu.classList.add('hidden');
+            }
+
+            setTimeout(function() {
+                var targetEl;
+
+                // Handle multi-target (for drugs/io/log combined)
+                if (step.multiTarget) {
+                    // Create a bounding box around all targets
+                    var targets = step.multiTarget.map(function(sel) {
+                        return document.querySelector(sel);
+                    }).filter(Boolean);
+
+                    if (targets.length > 0) {
+                        var minTop = Infinity, minLeft = Infinity, maxBottom = 0, maxRight = 0;
+                        targets.forEach(function(t) {
+                            var rect = t.getBoundingClientRect();
+                            minTop = Math.min(minTop, rect.top);
+                            minLeft = Math.min(minLeft, rect.left);
+                            maxBottom = Math.max(maxBottom, rect.bottom);
+                            maxRight = Math.max(maxRight, rect.right);
+                        });
+
+                        // Position spotlight to cover all three
+                        tourSpotlight.style.top = (minTop - 4) + 'px';
+                        tourSpotlight.style.left = (minLeft - 4) + 'px';
+                        tourSpotlight.style.width = (maxRight - minLeft + 8) + 'px';
+                        tourSpotlight.style.height = (maxBottom - minTop + 8) + 'px';
+
+                        targetEl = targets[0]; // Use first for tooltip positioning
+                    }
+                } else {
+                    targetEl = document.querySelector(step.target);
+                    if (targetEl) {
+                        var rect = targetEl.getBoundingClientRect();
+                        tourSpotlight.style.top = (rect.top - 4) + 'px';
+                        tourSpotlight.style.left = (rect.left - 4) + 'px';
+                        tourSpotlight.style.width = (rect.width + 8) + 'px';
+                        tourSpotlight.style.height = (rect.height + 8) + 'px';
+                    }
+                }
+
+                // Update tooltip content
+                tourTitle.textContent = step.title;
+                tourText.textContent = step.text;
+                tourStepIndicator.textContent = (stepIndex + 1) + ' of ' + tourSteps.length;
+                tourNextBtn.textContent = stepIndex === tourSteps.length - 1 ? 'Done' : 'Next';
+
+                // Position tooltip
+                if (targetEl) {
+                    var rect = targetEl.getBoundingClientRect();
+                    var tooltipRect = tourTooltip.getBoundingClientRect();
+
+                    if (step.position === 'bottom') {
+                        tourTooltip.style.top = (rect.bottom + 12) + 'px';
+                        tourTooltip.style.left = Math.max(12, Math.min(rect.left, window.innerWidth - 312)) + 'px';
+                    } else if (step.position === 'left') {
+                        tourTooltip.style.top = rect.top + 'px';
+                        tourTooltip.style.left = Math.max(12, rect.left - 312) + 'px';
+                    }
+                }
+
+                tourOverlay.classList.add('active');
+            }, step.inMoreMenu ? 100 : 0);
+        }
+
+        function nextTourStep() {
+            currentTourStep++;
+            if (currentTourStep >= tourSteps.length) {
+                endTour();
+            } else {
+                showTourStep(currentTourStep);
+            }
+        }
+
+        function endTour() {
+            localStorage.setItem('codeclock_tour_completed', 'true');
+            tourOverlay.classList.remove('active');
+            tabMoreMenu.classList.add('hidden');
+
+            // Return to landing screen
+            $('app').classList.add('hidden');
+            landingScreen.classList.remove('hidden');
+        }
+
+        // Tour event listeners
+        $('tourStart').addEventListener('click', startTour);
+        $('tourSkip').addEventListener('click', function() {
+            localStorage.setItem('codeclock_tour_completed', 'true');
+            hideTourWelcome();
+        });
+        $('tourNext').addEventListener('click', nextTourStep);
+        $('tourEnd').addEventListener('click', endTour);
 
         // Landing screen handlers
         $('btnNewCode').addEventListener('click', startFreshArrest);
