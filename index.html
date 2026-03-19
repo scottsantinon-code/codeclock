@@ -3985,38 +3985,38 @@
         // ========== TOUR SYSTEM ==========
         var tourSteps = [
             {
-                target: '[data-tab="timer"]',
+                target: '.tab-btn[data-tab="timer"]',
                 title: 'Timer',
                 text: 'Tap the rhythm at each check. CodeClock runs the ALS algorithm in the background and prompts when drugs are due.',
                 position: 'bottom'
             },
             {
-                target: '[data-tab="hts"]',
+                target: '.tab-btn[data-tab="hts"]',
                 title: 'Actions',
                 text: 'Actions, not acronyms. Specific checks and interventions, organized by priority — not a list to memorize.',
                 position: 'bottom'
             },
             {
-                target: '[data-tab="stop"]',
+                target: '.tab-more-item[data-tab="stop"]',
                 title: 'Prognosis',
                 text: 'Evidence-based survival data from 300,000+ real patients to inform difficult conversations.',
                 position: 'left',
                 inMoreMenu: true
             },
             {
-                target: '[data-tab="ecpr"]',
+                target: '.tab-more-item[data-tab="ecpr"]',
                 title: 'ECPR Criteria',
                 text: 'Quickly assess ECMO candidacy.',
                 position: 'left',
                 inMoreMenu: true
             },
             {
-                target: '#tourDrugsIOLog',
+                target: '.tab-more-item[data-tab="drugs"]',
                 title: 'Drugs, IO & Event Log',
                 text: 'Drug dosing, IO reference, and automatic event logging.',
                 position: 'left',
                 inMoreMenu: true,
-                multiTarget: ['[data-tab="drugs"]', '[data-tab="io"]', '[data-tab="log"]']
+                multiTarget: ['.tab-more-item[data-tab="drugs"]', '.tab-more-item[data-tab="io"]', '.tab-more-item[data-tab="log"]']
             }
         ];
 
@@ -4064,67 +4064,79 @@
                 tabMoreMenu.classList.add('hidden');
             }
 
-            setTimeout(function() {
-                var targetEl;
+            // Use requestAnimationFrame to ensure menu is rendered before positioning
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    positionTourElements(step, stepIndex);
+                });
+            });
+        }
 
-                // Handle multi-target (for drugs/io/log combined)
-                if (step.multiTarget) {
-                    // Create a bounding box around all targets
-                    var targets = step.multiTarget.map(function(sel) {
-                        return document.querySelector(sel);
-                    }).filter(Boolean);
+        function positionTourElements(step, stepIndex) {
+            var targetEl;
 
-                    if (targets.length > 0) {
-                        var minTop = Infinity, minLeft = Infinity, maxBottom = 0, maxRight = 0;
-                        targets.forEach(function(t) {
-                            var rect = t.getBoundingClientRect();
+            // Handle multi-target (for drugs/io/log combined)
+            if (step.multiTarget) {
+                // Create a bounding box around all targets
+                var targets = step.multiTarget.map(function(sel) {
+                    return document.querySelector(sel);
+                }).filter(Boolean);
+
+                if (targets.length > 0) {
+                    var minTop = Infinity, minLeft = Infinity, maxBottom = 0, maxRight = 0;
+                    targets.forEach(function(t) {
+                        var rect = t.getBoundingClientRect();
+                        if (rect.width > 0 && rect.height > 0) {
                             minTop = Math.min(minTop, rect.top);
                             minLeft = Math.min(minLeft, rect.left);
                             maxBottom = Math.max(maxBottom, rect.bottom);
                             maxRight = Math.max(maxRight, rect.right);
-                        });
+                        }
+                    });
 
-                        // Position spotlight to cover all three
+                    if (minTop !== Infinity) {
                         tourSpotlight.style.top = (minTop - 4) + 'px';
                         tourSpotlight.style.left = (minLeft - 4) + 'px';
                         tourSpotlight.style.width = (maxRight - minLeft + 8) + 'px';
                         tourSpotlight.style.height = (maxBottom - minTop + 8) + 'px';
-
-                        targetEl = targets[0]; // Use first for tooltip positioning
+                        targetEl = targets[0];
                     }
-                } else {
-                    targetEl = document.querySelector(step.target);
-                    if (targetEl) {
-                        var rect = targetEl.getBoundingClientRect();
+                }
+            } else {
+                targetEl = document.querySelector(step.target);
+                if (targetEl) {
+                    var rect = targetEl.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
                         tourSpotlight.style.top = (rect.top - 4) + 'px';
                         tourSpotlight.style.left = (rect.left - 4) + 'px';
                         tourSpotlight.style.width = (rect.width + 8) + 'px';
                         tourSpotlight.style.height = (rect.height + 8) + 'px';
                     }
                 }
+            }
 
-                // Update tooltip content
-                tourTitle.textContent = step.title;
-                tourText.textContent = step.text;
-                tourStepIndicator.textContent = (stepIndex + 1) + ' of ' + tourSteps.length;
-                tourNextBtn.textContent = stepIndex === tourSteps.length - 1 ? 'Done' : 'Next';
+            // Update tooltip content
+            tourTitle.textContent = step.title;
+            tourText.textContent = step.text;
+            tourStepIndicator.textContent = (stepIndex + 1) + ' of ' + tourSteps.length;
+            tourNextBtn.textContent = stepIndex === tourSteps.length - 1 ? 'Done' : 'Next';
 
-                // Position tooltip
-                if (targetEl) {
-                    var rect = targetEl.getBoundingClientRect();
-                    var tooltipRect = tourTooltip.getBoundingClientRect();
+            // Position tooltip
+            if (targetEl) {
+                var rect = targetEl.getBoundingClientRect();
 
-                    if (step.position === 'bottom') {
-                        tourTooltip.style.top = (rect.bottom + 12) + 'px';
-                        tourTooltip.style.left = Math.max(12, Math.min(rect.left, window.innerWidth - 312)) + 'px';
-                    } else if (step.position === 'left') {
-                        tourTooltip.style.top = rect.top + 'px';
-                        tourTooltip.style.left = Math.max(12, rect.left - 312) + 'px';
-                    }
+                if (step.position === 'bottom') {
+                    tourTooltip.style.top = (rect.bottom + 12) + 'px';
+                    tourTooltip.style.left = Math.max(12, Math.min(rect.left, window.innerWidth - 312)) + 'px';
+                } else if (step.position === 'left') {
+                    // Position tooltip to the left of the More menu
+                    var menuRect = tabMoreMenu.getBoundingClientRect();
+                    tourTooltip.style.top = Math.max(100, rect.top) + 'px';
+                    tourTooltip.style.left = Math.max(12, menuRect.left - 320) + 'px';
                 }
+            }
 
-                tourOverlay.classList.add('active');
-            }, step.inMoreMenu ? 100 : 0);
+            tourOverlay.classList.add('active');
         }
 
         function nextTourStep() {
